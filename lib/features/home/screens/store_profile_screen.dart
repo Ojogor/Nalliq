@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
 import '../../../core/constants/app_colors.dart';
 import '../../../core/models/user_model.dart';
-import '../../../core/models/food_item_model.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/store_provider.dart';
 import '../widgets/food_item_card.dart';
@@ -84,7 +84,13 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
     final store = storeProvider.storeUser!;
     final items = storeProvider.storeItems;
     final isFriend = storeProvider.isFriend;
+    final isFriendRequested = storeProvider.isFriendRequested;
+    final isRequesting = storeProvider.isRequesting;
     final isOwnStore = store.id == currentUserId;
+    Icon icon1 = Icon(Icons.person_add);
+    if (isFriend || isFriendRequested) {
+      icon1 = Icon(Icons.person_remove);
+    }
 
     return CustomScrollView(
       slivers: [
@@ -227,22 +233,68 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed:
-                          () => _toggleFriend(storeProvider, currentUserId),
-                      icon: Icon(
-                        isFriend ? Icons.person_remove : Icons.person_add,
-                      ),
-                      label: Text(isFriend ? 'Remove Friend' : 'Add Friend'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            isFriend ? AppColors.error : AppColors.primaryGreen,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                  if (!isRequesting)
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed:
+                            () => _toggleFriend(storeProvider, currentUserId),
+                        icon: Icon(
+                          isFriend ? Icons.person_remove : Icons.person_add,
+                        ),
+                        label: Text(
+                          isFriend
+                              ? 'Remove Friend'
+                              : isFriendRequested
+                              ? 'Cancel request'
+                              : 'Add Friend',
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              isFriend
+                                  ? AppColors.error
+                                  : isFriendRequested
+                                  ? AppColors.grey
+                                  : AppColors.primaryGreen,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
                       ),
                     ),
-                  ),
+                  if (isRequesting) ...[
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed:
+                            () => _toggleFriend1(
+                              storeProvider,
+                              currentUserId,
+                              "Confirm",
+                            ),
+
+                        label: Text("Confirm"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryGreen,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed:
+                            () => _toggleFriend1(
+                              storeProvider,
+                              currentUserId,
+                              "Delete",
+                            ),
+                        label: Text("Delete"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.lightGrey,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton.icon(
@@ -394,6 +446,14 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
 
   void _toggleFriend(StoreProvider storeProvider, String currentUserId) {
     storeProvider.toggleFriend(widget.storeUserId, currentUserId);
+  }
+
+  void _toggleFriend1(
+    StoreProvider storeProvider,
+    String currentUserId,
+    String action,
+  ) {
+    storeProvider.toggleFriend1(widget.storeUserId, currentUserId, action);
   }
 
   void _messageStore(AppUser store) {
