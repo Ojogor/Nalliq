@@ -143,7 +143,9 @@ class _ProductFormWidgetState extends State<ProductFormWidget> {
                     color:
                         widget.productDraft.photos.length >= 4
                             ? AppColors.success
-                            : AppColors.textSecondary,
+                            : (Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white70
+                                : AppColors.textSecondary),
                   ),
                 ),
               ],
@@ -172,20 +174,33 @@ class _ProductFormWidgetState extends State<ProductFormWidget> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add_photo_alternate, size: 48, color: AppColors.grey),
+            Icon(
+              Icons.add_photo_alternate,
+              size: 48,
+              color:
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white54
+                      : AppColors.grey,
+            ),
             const SizedBox(height: AppDimensions.marginS),
             Text(
               'Add Photos',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.grey,
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white70
+                        : AppColors.grey,
                 fontWeight: FontWeight.w500,
               ),
             ),
             Text(
               'From camera or gallery',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white54
+                        : AppColors.textSecondary,
+              ),
             ),
           ],
         ),
@@ -258,9 +273,12 @@ class _ProductFormWidgetState extends State<ProductFormWidget> {
             children: [
               Text(
                 '${widget.productDraft.photos.length} photo(s) added',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white70
+                          : AppColors.textSecondary,
+                ),
               ),
               TextButton.icon(
                 onPressed: _showPhotoSourceDialog,
@@ -308,10 +326,28 @@ class _ProductFormWidgetState extends State<ProductFormWidget> {
                 Expanded(
                   child: TextFormField(
                     controller: _barcodeController,
-                    decoration: const InputDecoration(
+                    style: TextStyle(
+                      color:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : Colors.black,
+                    ),
+                    decoration: InputDecoration(
                       labelText: 'Barcode (Optional)',
                       hintText: 'Scan or enter manually',
-                      prefixIcon: Icon(Icons.qr_code_scanner),
+                      prefixIcon: const Icon(Icons.qr_code_scanner),
+                      labelStyle: TextStyle(
+                        color:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white70
+                                : null,
+                      ),
+                      hintStyle: TextStyle(
+                        color:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white54
+                                : null,
+                      ),
                     ),
                     readOnly: true,
                     onChanged: (value) {
@@ -378,7 +414,12 @@ class _ProductFormWidgetState extends State<ProductFormWidget> {
               const SizedBox(height: AppDimensions.marginS),
               Text(
                 'Categories: ${widget.productDraft.categories}',
-                style: TextStyle(color: Colors.grey[600]),
+                style: TextStyle(
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white70
+                          : Colors.grey[600],
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -407,10 +448,28 @@ class _ProductFormWidgetState extends State<ProductFormWidget> {
             // Item Name
             TextFormField(
               controller: _nameController,
-              decoration: const InputDecoration(
+              style: TextStyle(
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white
+                        : Colors.black,
+              ),
+              decoration: InputDecoration(
                 labelText: 'Item Name *',
                 hintText: 'e.g., Fresh Bananas, Canned Tomatoes',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
+                labelStyle: TextStyle(
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white70
+                          : null,
+                ),
+                hintStyle: TextStyle(
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white54
+                          : null,
+                ),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -428,10 +487,28 @@ class _ProductFormWidgetState extends State<ProductFormWidget> {
             // Description
             TextFormField(
               controller: _descriptionController,
-              decoration: const InputDecoration(
+              style: TextStyle(
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white
+                        : Colors.black,
+              ),
+              decoration: InputDecoration(
                 labelText: 'Description',
                 hintText: 'Additional details about the item...',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
+                labelStyle: TextStyle(
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white70
+                          : null,
+                ),
+                hintStyle: TextStyle(
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white54
+                          : null,
+                ),
               ),
               maxLines: 3,
               onChanged: (value) {
@@ -444,9 +521,15 @@ class _ProductFormWidgetState extends State<ProductFormWidget> {
             // Category Dropdown
             DropdownButtonFormField<ItemCategory>(
               value: widget.productDraft.category,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Category *',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
+                labelStyle: TextStyle(
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white70
+                          : null,
+                ),
               ),
               items:
                   ItemCategory.values.map((category) {
@@ -493,9 +576,21 @@ class _ProductFormWidgetState extends State<ProductFormWidget> {
                   flex: 2,
                   child: TextFormField(
                     controller: _quantityController,
-                    decoration: const InputDecoration(
+                    style: TextStyle(
+                      color:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : Colors.black,
+                    ),
+                    decoration: InputDecoration(
                       labelText: 'Quantity *',
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
+                      labelStyle: TextStyle(
+                        color:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white70
+                                : null,
+                      ),
                     ),
                     keyboardType: TextInputType.number,
                     validator: (value) {
@@ -519,10 +614,28 @@ class _ProductFormWidgetState extends State<ProductFormWidget> {
                   flex: 3,
                   child: TextFormField(
                     controller: _unitController,
-                    decoration: const InputDecoration(
+                    style: TextStyle(
+                      color:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : Colors.black,
+                    ),
+                    decoration: InputDecoration(
                       labelText: 'Unit *',
                       hintText: 'kg, pieces, cans, etc.',
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
+                      labelStyle: TextStyle(
+                        color:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white70
+                                : null,
+                      ),
+                      hintStyle: TextStyle(
+                        color:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white54
+                                : null,
+                      ),
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
@@ -543,9 +656,15 @@ class _ProductFormWidgetState extends State<ProductFormWidget> {
             // Condition Dropdown
             DropdownButtonFormField<ItemCondition>(
               value: widget.productDraft.condition,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Condition *',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
+                labelStyle: TextStyle(
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white70
+                          : null,
+                ),
               ),
               items:
                   ItemCondition.values.map((condition) {
@@ -620,10 +739,28 @@ class _ProductFormWidgetState extends State<ProductFormWidget> {
             // Reason for sharing
             TextFormField(
               controller: _reasonController,
-              decoration: const InputDecoration(
+              style: TextStyle(
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white
+                        : Colors.black,
+              ),
+              decoration: InputDecoration(
                 labelText: 'Reason for Sharing',
                 hintText: 'e.g., Have extra, Moving away, etc.',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
+                labelStyle: TextStyle(
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white70
+                          : null,
+                ),
+                hintStyle: TextStyle(
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white54
+                          : null,
+                ),
               ),
               onChanged: (value) {
                 _updateDraft(reasonForSharing: value);
@@ -773,7 +910,10 @@ class _ProductFormWidgetState extends State<ProductFormWidget> {
                 Text(
                   'Choose how you want to add photos',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white70
+                            : AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -847,9 +987,12 @@ class _ProductFormWidgetState extends State<ProductFormWidget> {
             const SizedBox(height: 4),
             Text(
               subtitle,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white70
+                        : AppColors.textSecondary,
+              ),
               textAlign: TextAlign.center,
             ),
           ],

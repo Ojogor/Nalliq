@@ -43,7 +43,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor:
+          Theme.of(context).brightness == Brightness.dark
+              ? Colors.grey[900]
+              : AppColors.background,
       body:
           _isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -118,27 +121,43 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       fit: BoxFit.cover,
                       placeholder:
                           (context, url) => Container(
-                            color: AppColors.lightGrey,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[800]
+                                    : AppColors.lightGrey,
                             child: const Center(
                               child: CircularProgressIndicator(),
                             ),
                           ),
                       errorWidget:
                           (context, url, error) => Container(
-                            color: AppColors.lightGrey,
-                            child: const Icon(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[800]
+                                    : AppColors.lightGrey,
+                            child: Icon(
                               Icons.restaurant,
                               size: 64,
-                              color: AppColors.grey,
+                              color:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white54
+                                      : AppColors.grey,
                             ),
                           ),
                     )
                     : Container(
-                      color: AppColors.lightGrey,
-                      child: const Icon(
+                      color:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[800]
+                              : AppColors.lightGrey,
+                      child: Icon(
                         Icons.restaurant,
                         size: 64,
-                        color: AppColors.grey,
+                        color:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white54
+                                : AppColors.grey,
                       ),
                     ),
           ),
@@ -271,15 +290,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     IconData icon, {
     bool fullWidth = false,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: fullWidth ? double.infinity : null,
       padding: const EdgeInsets.all(AppDimensions.paddingM),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: isDark ? Colors.grey[850] : AppColors.white,
         borderRadius: BorderRadius.circular(AppDimensions.radiusM),
         boxShadow: [
           BoxShadow(
-            color: AppColors.grey.withOpacity(0.1),
+            color: (isDark ? Colors.black : AppColors.grey).withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -290,15 +311,16 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: AppColors.grey),
+              Icon(
+                icon,
+                size: 16,
+                color: isDark ? Colors.white54 : AppColors.grey,
+              ),
               const SizedBox(width: AppDimensions.marginXS),
               Text(
                 title,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color:
-                      Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white70
-                          : AppColors.textSecondary,
+                  color: isDark ? Colors.white70 : AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -307,9 +329,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           const SizedBox(height: AppDimensions.marginXS),
           Text(
             value,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : Colors.black,
+            ),
           ),
         ],
       ),
@@ -417,10 +440,16 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         return Container(
           padding: const EdgeInsets.all(AppDimensions.paddingM),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[900]
+                    : AppColors.white,
             boxShadow: [
               BoxShadow(
-                color: AppColors.grey.withOpacity(0.2),
+                color: (Theme.of(context).brightness == Brightness.dark
+                        ? Colors.black
+                        : AppColors.grey)
+                    .withOpacity(0.2),
                 blurRadius: 8,
                 offset: const Offset(0, -2),
               ),
