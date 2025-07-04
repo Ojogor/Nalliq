@@ -1,26 +1,22 @@
 import 'package:go_router/go_router.dart';
+
 import '../auth/screens/login_screen.dart';
 import '../auth/screens/register_screen.dart';
+import '../cart/screens/cart_screen.dart';
+import '../debug/debug_screen.dart';
 import '../home/screens/home_screen.dart';
 import '../home/screens/store_profile_screen.dart';
 import '../items/screens/add_item_screen.dart';
 import '../items/screens/enhanced_add_item_screen.dart';
 import '../items/screens/item_detail_screen.dart';
-import '../cart/screens/cart_screen.dart';
-import '../profile/screens/profile_screen.dart';
-import '../profile/screens/my_listings_screen.dart';
-import '../profile/screens/incoming_requests_screen.dart';
-import '../profile/screens/outgoing_requests_screen.dart';
+import '../navigation/main_navigation.dart';
 import '../profile/screens/friends_screen.dart';
 import '../profile/screens/history_screen.dart';
+import '../profile/screens/incoming_requests_screen.dart';
+import '../profile/screens/my_listings_screen.dart';
+import '../profile/screens/outgoing_requests_screen.dart';
 import '../settings/screens/settings_screen.dart';
-import '../settings/screens/change_password_screen.dart';
-import '../trust/screens/trust_score_screen.dart';
-import '../trust/screens/id_verification_screen.dart';
-import '../trust/screens/certifications_screen.dart';
-import '../exchange/screens/barter_detail_screen.dart';
-import '../navigation/main_navigation.dart';
-import '../debug/debug_screen.dart';
+
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -52,11 +48,11 @@ class AppRouter {
             name: 'cart',
             builder: (context, state) => const CartScreen(),
           ),
-          GoRoute(
-            path: '/profile',
-            name: 'profile',
-            builder: (context, state) => const ProfileScreen(),
-          ),
+          // GoRoute(
+          //   path: '/profile',
+          //   name: 'profile',
+          //   //builder: (context, state) => const ProfileScreen(),
+          // ),
           GoRoute(
             path: '/settings',
             name: 'settings',

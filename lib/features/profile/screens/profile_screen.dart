@@ -203,6 +203,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ),
+
+          const SizedBox(height: AppDimensions.marginS),
+
+          // Edit profile button
+          OutlinedButton.icon(
+            onPressed: () => context.pushNamed('edit-profile'),
+            icon: const Icon(Icons.edit),
+            label: const Text('Edit Profile'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primaryGreen,
+              side: const BorderSide(color: AppColors.primaryGreen),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingL,
+                vertical: AppDimensions.paddingM,
+              ),
+            ),
+          ),
         ],
       ),
     );

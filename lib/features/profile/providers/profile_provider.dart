@@ -189,82 +189,8 @@ class ProfileProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> sendFriendRequest(String friendUserId) async {
-    if (_currentUser == null) return false;
-
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
-
-      // Add friend to current user's friend list
-      final updatedFriendIds = [..._currentUser!.friendIds, friendUserId];
-
-      await _firestore.collection('users').doc(_currentUser!.id).update({
-        'friendIds': updatedFriendIds,
-      });
-
-      // Only add to current user's friend list (one-way connection)
-
-      // Update local data
-      _currentUser = _currentUser!.copyWith(friendIds: updatedFriendIds);
-      await _loadFriends(_currentUser!.id);
-
-      return true;
-    } catch (e) {
-      _error = e.toString();
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<bool> removeFriend(String friendUserId) async {
-    if (_currentUser == null) return false;
-
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
-
-      // Remove friend from current user's friend list
-      final updatedFriendIds =
-          _currentUser!.friendIds.where((id) => id != friendUserId).toList();
-
-      await _firestore.collection('users').doc(_currentUser!.id).update({
-        'friendIds': updatedFriendIds,
-      });
-
-      // Remove current user from friend's friend list
-      final friendDoc =
-          await _firestore.collection('users').doc(friendUserId).get();
-
-      if (friendDoc.exists) {
-        final friendData = friendDoc.data() as Map<String, dynamic>;
-        final friendFriendIds =
-            List<String>.from(
-              friendData['friendIds'] ?? [],
-            ).where((id) => id != _currentUser!.id).toList();
-
-        await _firestore.collection('users').doc(friendUserId).update({
-          'friendIds': friendFriendIds,
-        });
-      }
-
-      // Update local data
-      _currentUser = _currentUser!.copyWith(friendIds: updatedFriendIds);
-      await _loadFriends(_currentUser!.id);
-
-      return true;
-    } catch (e) {
-      _error = e.toString();
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
+  
+    
 
   Future<List<AppUser>> searchUsers(String query) async {
     if (query.isEmpty) return [];
