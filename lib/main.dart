@@ -10,7 +10,9 @@ import 'features/home/providers/home_provider.dart';
 import 'features/home/providers/store_provider.dart';
 import 'features/items/providers/item_provider.dart';
 import 'features/cart/providers/cart_provider.dart';
+import 'features/exchange/providers/exchange_provider.dart';
 import 'features/profile/providers/profile_provider.dart';
+import 'features/settings/providers/settings_provider.dart';
 import 'features/navigation/app_router.dart';
 
 void main() async {
@@ -39,7 +41,11 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => StoreProvider()),
         ChangeNotifierProvider(create: (_) => ItemProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()..initialize()),
+        ChangeNotifierProvider(create: (_) => ExchangeProvider()),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
+        ChangeNotifierProvider(
+          create: (_) => SettingsProvider()..loadSettings(),
+        ),
       ],
       child: MaterialApp.router(
         title: AppStrings.appName,

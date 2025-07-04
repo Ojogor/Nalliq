@@ -19,11 +19,37 @@ class _OutgoingRequestsScreenState extends State<OutgoingRequestsScreen> {
   bool _isLoading = true;
   List<ExchangeRequest> _outgoingRequests = [];
   String? _error;
+  Map<String, String> _userDisplayNames = {}; // Cache for user display names
 
   @override
   void initState() {
     super.initState();
     _loadOutgoingRequests();
+  }
+
+  Future<String> _getUserDisplayName(String userId) async {
+    // Check cache first
+    if (_userDisplayNames.containsKey(userId)) {
+      return _userDisplayNames[userId]!;
+    }
+
+    try {
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        final userData = userDoc.data() as Map<String, dynamic>;
+        final displayName =
+            userData['displayName'] ?? userData['email'] ?? 'Unknown User';
+        _userDisplayNames[userId] = displayName;
+        return displayName;
+      } else {
+        _userDisplayNames[userId] = 'Unknown User';
+        return 'Unknown User';
+      }
+    } catch (e) {
+      print('Error fetching user display name for $userId: $e');
+      _userDisplayNames[userId] = 'Unknown User';
+      return 'Unknown User';
+    }
   }
 
   Future<void> _loadOutgoingRequests() async {
@@ -234,11 +260,16 @@ class _OutgoingRequestsScreenState extends State<OutgoingRequestsScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Text(
-                    'Request to ${request.ownerId}', // TODO: Get actual user name
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: FutureBuilder<String>(
+                    future: _getUserDisplayName(request.ownerId),
+                    builder: (context, snapshot) {
+                      final displayName = snapshot.data ?? 'Loading...';
+                      return Text(
+                        'Request to $displayName',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      );
+                    },
                   ),
                 ),
                 Container(

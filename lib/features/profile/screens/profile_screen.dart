@@ -161,6 +161,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
+
+          const SizedBox(height: AppDimensions.marginM),
+
+          // Improve trust score button
+          ElevatedButton.icon(
+            onPressed: () => _showTrustScoreDialog(context, user),
+            icon: const Icon(Icons.trending_up),
+            label: const Text('Improve Trust Score'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+              foregroundColor: AppColors.white,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingL,
+                vertical: AppDimensions.paddingM,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -343,6 +360,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return AppColors.primaryGreen;
   }
 
+  void _showTrustScoreDialog(BuildContext context, user) {
+    showDialog(
+      context: context,
+      builder: (context) => TrustScoreDialog(user: user),
+    );
+  }
+
   void _handleLogout(AuthProvider authProvider) {
     showDialog(
       context: context,
@@ -367,5 +391,228 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
     );
+  }
+}
+
+class TrustScoreDialog extends StatefulWidget {
+  final dynamic user;
+
+  const TrustScoreDialog({super.key, required this.user});
+
+  @override
+  State<TrustScoreDialog> createState() => _TrustScoreDialogState();
+}
+
+class _TrustScoreDialogState extends State<TrustScoreDialog> {
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Row(
+        children: [
+          Icon(Icons.verified, color: AppColors.primaryGreen),
+          const SizedBox(width: 8),
+          const Text('Trust Score'),
+        ],
+      ),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Current trust score
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.lightGrey,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Current Score:',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    '${widget.user?.trustScore?.toStringAsFixed(1) ?? '0.0'}/10.0',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryGreen,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            Text(
+              'Ways to improve your trust score:',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Trust score improvement options
+            _buildTrustScoreOption(
+              context,
+              Icons.verified_user,
+              'ID Verification',
+              '+2.0 points',
+              'Verify your identity with official documents',
+              AppColors.info,
+              !(widget.user?.idVerified ?? false),
+            ),
+
+            _buildTrustScoreOption(
+              context,
+              Icons.quiz,
+              'Food Safety QA',
+              '+1.5 points',
+              'Complete food safety questionnaire',
+              AppColors.primaryOrange,
+              !(widget.user?.foodSafetyQACompleted ?? false),
+            ),
+
+            _buildTrustScoreOption(
+              context,
+              Icons.swap_horiz,
+              'Complete Barters',
+              '+0.5 points each',
+              'Successfully complete barter exchanges',
+              AppColors.primaryGreen,
+              true, // Always available
+            ),
+
+            const SizedBox(height: 16),
+
+            Text(
+              'Note: Trust score may be reduced for negative actions like failing to complete exchanges, reporting violations, etc.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Close'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTrustScoreOption(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String points,
+    String description,
+    Color color,
+    bool isAvailable,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        border: Border.all(color: color.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: color.withOpacity(0.2),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        title: Row(
+          children: [
+            Expanded(child: Text(title)),
+            Text(
+              points,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        subtitle: Text(description),
+        trailing:
+            isAvailable
+                ? Icon(Icons.arrow_forward_ios, size: 16, color: color)
+                : Text(
+                  'Completed',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.success,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+        onTap: isAvailable ? () => _handleTrustScoreAction(title) : null,
+      ),
+    );
+  }
+
+  void _handleTrustScoreAction(String action) async {
+    final profileProvider = context.read<ProfileProvider>();
+    final authProvider = context.read<AuthProvider>();
+
+    Navigator.of(context).pop();
+
+    switch (action) {
+      case 'ID Verification':
+        final success = await profileProvider.completeIDVerification(
+          authProvider.user!.uid,
+        );
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'ID verification completed! +2.0 trust score points',
+              ),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${profileProvider.error}'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+        break;
+      case 'Food Safety QA':
+        final success = await profileProvider.completeFoodSafetyQA(
+          authProvider.user!.uid,
+        );
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Food safety QA completed! +1.5 trust score points',
+              ),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${profileProvider.error}'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+        break;
+      case 'Complete Barters':
+        // Navigate to barter/exchange screen
+        context.goNamed('home');
+        break;
+    }
   }
 }

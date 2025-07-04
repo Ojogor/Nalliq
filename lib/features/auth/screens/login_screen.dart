@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
-import '../../../core/models/user_model.dart';
 import '../../../core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_text_field.dart';
@@ -21,7 +20,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  UserRole _userType = UserRole.individual;
 
   @override
   void dispose() {
@@ -160,11 +158,6 @@ class _LoginScreenState extends State<LoginScreen> {
             },
           ),
 
-          const SizedBox(height: AppDimensions.marginM),
-
-          // User Type Selection
-          _buildUserTypeSelection(),
-
           if (authProvider.error != null) ...[
             const SizedBox(height: AppDimensions.marginM),
             Container(
@@ -204,67 +197,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildUserTypeSelection() {
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingM),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.grey.withOpacity(0.3)),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'I am a:',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: AppDimensions.marginS),
-          Row(
-            children: [
-              Expanded(
-                child: RadioListTile<UserRole>(
-                  title: const Text('Community User'),
-                  subtitle: const Text('Share & receive food'),
-                  value: UserRole.individual,
-                  groupValue: _userType,
-                  onChanged: (value) {
-                    setState(() {
-                      _userType = value!;
-                    });
-                  },
-                  activeColor: AppColors.primaryGreen,
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: RadioListTile<UserRole>(
-                  title: const Text('Food Bank'),
-                  subtitle: const Text('Distribute food resources'),
-                  value: UserRole.foodBank,
-                  groupValue: _userType,
-                  onChanged: (value) {
-                    setState(() {
-                      _userType = value!;
-                    });
-                  },
-                  activeColor: AppColors.primaryOrange,
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildRegisterLink() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -295,7 +227,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final success = await authProvider.signInWithEmailAndPassword(
       _emailController.text.trim(),
       _passwordController.text,
-      userRole: _userType,
     );
 
     if (success && mounted) {
