@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../auth/providers/auth_provider.dart' as AppAuth;
 import '../providers/settings_provider.dart';
 
@@ -14,15 +15,11 @@ class SettingsScreen extends StatelessWidget {
     return Consumer2<SettingsProvider, AppAuth.AuthProvider>(
       builder: (context, settingsProvider, authProvider, child) {
         return Scaffold(
-          backgroundColor:
-              settingsProvider.darkModeEnabled
-                  ? const Color(0xFF121212)
-                  : AppColors.background,
           appBar: AppBar(
-            title: const Text('Settings'),
+            title: Text(AppLocalizations.of(context).settings),
             backgroundColor: AppColors.primaryGreen,
             foregroundColor: AppColors.white,
-            automaticallyImplyLeading: false,
+            automaticallyImplyLeading: true,
           ),
           body: SafeArea(
             child: SingleChildScrollView(
@@ -31,11 +28,14 @@ class SettingsScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Account Section
-                  _buildSectionHeader('Account', settingsProvider),
+                  _buildSectionHeader(
+                    AppLocalizations.of(context).account,
+                    settingsProvider,
+                  ),
                   _buildSettingsCard(settingsProvider, [
                     _buildSettingsItem(
                       icon: Icons.person,
-                      title: 'Edit Profile',
+                      title: AppLocalizations.of(context).editProfile,
                       subtitle: 'Update your personal information',
                       onTap: () {
                         // Navigate to edit profile
@@ -45,23 +45,20 @@ class SettingsScreen extends StatelessWidget {
                     _buildDivider(),
                     _buildSettingsItem(
                       icon: Icons.security,
-                      title: 'Identity Verification',
+                      title: AppLocalizations.of(context).identityVerification,
                       subtitle: 'Verify your identity',
                       onTap: () {
-                        _showComingSoonSnackBar(
-                          context,
-                          'Identity verification',
-                        );
+                        context.push('/id-verification');
                       },
                       settingsProvider: settingsProvider,
                     ),
                     _buildDivider(),
                     _buildSettingsItem(
                       icon: Icons.lock,
-                      title: 'Change Password',
+                      title: AppLocalizations.of(context).changePassword,
                       subtitle: 'Update your account password',
                       onTap: () {
-                        _showComingSoonSnackBar(context, 'Password change');
+                        context.push('/change-password');
                       },
                       settingsProvider: settingsProvider,
                     ),
@@ -74,7 +71,7 @@ class SettingsScreen extends StatelessWidget {
                   _buildSettingsCard(settingsProvider, [
                     _buildSwitchItem(
                       icon: Icons.dark_mode,
-                      title: 'Dark Mode',
+                      title: AppLocalizations.of(context).darkMode,
                       subtitle: 'Use dark theme',
                       value: settingsProvider.darkModeEnabled,
                       onChanged: (value) => settingsProvider.toggleDarkMode(),
@@ -83,7 +80,7 @@ class SettingsScreen extends StatelessWidget {
                     _buildDivider(),
                     _buildSettingsItem(
                       icon: Icons.language,
-                      title: 'Language',
+                      title: AppLocalizations.of(context).language,
                       subtitle: settingsProvider.selectedLanguage,
                       onTap:
                           () => _showLanguageDialog(context, settingsProvider),
@@ -392,7 +389,7 @@ class SettingsScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color:
             settingsProvider.darkModeEnabled
-                ? const Color(0xFF1E1E1E)
+                ? const Color(0xFF2D2D30)
                 : AppColors.white,
         borderRadius: BorderRadius.circular(AppDimensions.radiusM),
         boxShadow: [
@@ -675,12 +672,12 @@ class SettingsScreen extends StatelessWidget {
             content: const Text('Are you sure you want to logout?'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => context.pop(),
                 child: const Text('Cancel'),
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  context.pop();
                   authProvider.signOut();
                   context.goNamed('login');
                 },

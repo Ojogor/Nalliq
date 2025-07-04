@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/models/food_item_model.dart';
 import '../providers/item_provider.dart';
 import '../../cart/providers/cart_provider.dart';
+import '../../auth/providers/auth_provider.dart';
 
 class ItemDetailScreen extends StatefulWidget {
   final String itemId;
@@ -57,16 +59,30 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.primaryGreen,
         foregroundColor: AppColors.white,
+        automaticallyImplyLeading: true,
       ),
-      body: const Center(
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: AppColors.grey),
-            SizedBox(height: AppDimensions.marginM),
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color:
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white54
+                      : AppColors.grey,
+            ),
+            const SizedBox(height: AppDimensions.marginM),
             Text(
               'Item not found',
-              style: TextStyle(fontSize: 18, color: AppColors.textSecondary),
+              style: TextStyle(
+                fontSize: 18,
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white70
+                        : AppColors.textSecondary,
+              ),
             ),
           ],
         ),
@@ -83,6 +99,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           pinned: true,
           backgroundColor: AppColors.primaryGreen,
           foregroundColor: AppColors.white,
+          automaticallyImplyLeading: true,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/home');
+              }
+            },
+          ),
           flexibleSpace: FlexibleSpaceBar(
             background:
                 _item!.imageUrls.isNotEmpty
@@ -268,7 +295,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               Text(
                 title,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white70
+                          : AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -372,8 +402,16 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   }
 
   Widget _buildBottomActions() {
-    return Consumer<CartProvider>(
-      builder: (context, cartProvider, child) {
+    return Consumer2<CartProvider, AuthProvider>(
+      builder: (context, cartProvider, authProvider, child) {
+        // Check if the current user owns this item
+        final isOwnItem = authProvider.user?.uid == _item?.ownerId;
+
+        // If user owns the item, don't show the cart button
+        if (isOwnItem) {
+          return const SizedBox.shrink();
+        }
+
         final isInCart = cartProvider.isItemInCart(widget.itemId);
 
         return Container(

@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../providers/home_provider.dart';
 import '../../../core/models/user_model.dart';
-import '../../auth/providers/auth_provider.dart';
-import '../../cart/providers/cart_provider.dart';
 
 class UserStoreCard extends StatelessWidget {
   final UserStore store;
@@ -13,10 +10,7 @@ class UserStoreCard extends StatelessWidget {
   const UserStoreCard({super.key, required this.store, required this.onTap});
   @override
   Widget build(BuildContext context) {
-    // Check if this is the current user's store
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final currentUserId = authProvider.user?.uid;
-    final isOwnStore = store.user.id == currentUserId;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       width: 280,
@@ -119,17 +113,17 @@ class UserStoreCard extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 16),
-                              const Icon(
+                              Icon(
                                 Icons.inventory_2_outlined,
                                 size: 16,
-                                color: Colors.grey,
+                                color: isDark ? Colors.white54 : Colors.grey,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 '${store.totalItems} items',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
-                                  color: Colors.grey,
+                                  color: isDark ? Colors.white70 : Colors.grey,
                                 ),
                               ),
                             ],
@@ -144,10 +138,12 @@ class UserStoreCard extends StatelessWidget {
               Expanded(
                 child:
                     store.recentItems.isEmpty
-                        ? const Center(
+                        ? Center(
                           child: Text(
                             'No items available',
-                            style: TextStyle(color: Colors.grey),
+                            style: TextStyle(
+                              color: isDark ? Colors.white54 : Colors.grey,
+                            ),
                           ),
                         )
                         : Padding(
@@ -155,12 +151,12 @@ class UserStoreCard extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Recent Items:',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
-                                  color: Colors.grey,
+                                  color: isDark ? Colors.white70 : Colors.grey,
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -202,13 +198,15 @@ class UserStoreCard extends StatelessWidget {
                                                   fontSize: 13,
                                                   fontWeight: FontWeight.w500,
                                                 ),
-                                                overflow: TextOverflow.ellipsis,
                                               ),
                                               Text(
                                                 item.categoryDisplayName,
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 11,
-                                                  color: Colors.grey,
+                                                  color:
+                                                      isDark
+                                                          ? Colors.white54
+                                                          : Colors.grey,
                                                 ),
                                               ),
                                             ],

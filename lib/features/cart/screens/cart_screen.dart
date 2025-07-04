@@ -340,13 +340,13 @@ class CartScreen extends StatelessWidget {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => context.pop(),
                 child: const Text('Cancel'),
               ),
               TextButton(
                 onPressed: () {
                   cartProvider.clearCart();
-                  Navigator.of(context).pop();
+                  context.pop();
                 },
                 style: TextButton.styleFrom(foregroundColor: AppColors.error),
                 child: const Text('Clear'),
@@ -453,15 +453,12 @@ class _BarterItemSelectionDialogState extends State<BarterItemSelectionDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
+        TextButton(onPressed: () => context.pop(), child: const Text('Cancel')),
         ElevatedButton(
           onPressed:
               _selectedItemIds.isEmpty
                   ? null
-                  : () => Navigator.of(context).pop(_selectedItemIds.toList()),
+                  : () => context.pop(_selectedItemIds.toList()),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primaryGreen,
           ),

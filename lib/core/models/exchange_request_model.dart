@@ -2,7 +2,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum RequestType { barter, donation }
 
-enum RequestStatus { pending, accepted, declined, completed, cancelled }
+enum RequestStatus {
+  pending,
+  accepted,
+  declined,
+  barterConfirmed, // New status for when users agree and confirm the barter
+  awaitingProof, // New status when users need to upload completion proof
+  completed,
+  cancelled,
+}
 
 class ExchangeRequest {
   final String id;
@@ -20,6 +28,10 @@ class ExchangeRequest {
   final DateTime? scheduledMeetingTime;
   final List<String> chatMessages;
   final Map<String, dynamic>? metadata;
+  final List<String>? requesterProofImages; // Proof images from requester
+  final List<String>? ownerProofImages; // Proof images from owner
+  final DateTime? barterConfirmedAt; // When barter was confirmed
+  final DateTime? proofSubmittedAt; // When proof was submitted
 
   const ExchangeRequest({
     required this.id,
@@ -37,6 +49,10 @@ class ExchangeRequest {
     this.scheduledMeetingTime,
     this.chatMessages = const [],
     this.metadata,
+    this.requesterProofImages,
+    this.ownerProofImages,
+    this.barterConfirmedAt,
+    this.proofSubmittedAt,
   });
 
   factory ExchangeRequest.fromFirestore(DocumentSnapshot doc) {
@@ -72,6 +88,22 @@ class ExchangeRequest {
               : null,
       chatMessages: List<String>.from(data['chatMessages'] ?? []),
       metadata: data['metadata'],
+      requesterProofImages:
+          data['requesterProofImages'] != null
+              ? List<String>.from(data['requesterProofImages'])
+              : null,
+      ownerProofImages:
+          data['ownerProofImages'] != null
+              ? List<String>.from(data['ownerProofImages'])
+              : null,
+      barterConfirmedAt:
+          data['barterConfirmedAt'] != null
+              ? (data['barterConfirmedAt'] as Timestamp).toDate()
+              : null,
+      proofSubmittedAt:
+          data['proofSubmittedAt'] != null
+              ? (data['proofSubmittedAt'] as Timestamp).toDate()
+              : null,
     );
   }
 
@@ -96,6 +128,16 @@ class ExchangeRequest {
               : null,
       'chatMessages': chatMessages,
       'metadata': metadata,
+      'requesterProofImages': requesterProofImages,
+      'ownerProofImages': ownerProofImages,
+      'barterConfirmedAt':
+          barterConfirmedAt != null
+              ? Timestamp.fromDate(barterConfirmedAt!)
+              : null,
+      'proofSubmittedAt':
+          proofSubmittedAt != null
+              ? Timestamp.fromDate(proofSubmittedAt!)
+              : null,
     };
   }
 
@@ -107,6 +149,10 @@ class ExchangeRequest {
     DateTime? scheduledMeetingTime,
     List<String>? chatMessages,
     Map<String, dynamic>? metadata,
+    List<String>? requesterProofImages,
+    List<String>? ownerProofImages,
+    DateTime? barterConfirmedAt,
+    DateTime? proofSubmittedAt,
   }) {
     return ExchangeRequest(
       id: id,
@@ -124,6 +170,10 @@ class ExchangeRequest {
       scheduledMeetingTime: scheduledMeetingTime ?? this.scheduledMeetingTime,
       chatMessages: chatMessages ?? this.chatMessages,
       metadata: metadata ?? this.metadata,
+      requesterProofImages: requesterProofImages ?? this.requesterProofImages,
+      ownerProofImages: ownerProofImages ?? this.ownerProofImages,
+      barterConfirmedAt: barterConfirmedAt ?? this.barterConfirmedAt,
+      proofSubmittedAt: proofSubmittedAt ?? this.proofSubmittedAt,
     );
   }
 
@@ -134,4 +184,11 @@ class ExchangeRequest {
   bool get isCompleted => status == RequestStatus.completed;
   bool get isDeclined => status == RequestStatus.declined;
   bool get isCancelled => status == RequestStatus.cancelled;
+  bool get isBarterConfirmed => status == RequestStatus.barterConfirmed;
+  bool get isAwaitingProof => status == RequestStatus.awaitingProof;
+
+  // Helper methods for proof status
+  bool get hasRequesterProof => requesterProofImages?.isNotEmpty ?? false;
+  bool get hasOwnerProof => ownerProofImages?.isNotEmpty ?? false;
+  bool get hasBothProofs => hasRequesterProof && hasOwnerProof;
 }

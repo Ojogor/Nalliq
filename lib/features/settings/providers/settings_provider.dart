@@ -54,6 +54,12 @@ class SettingsProvider extends ChangeNotifier {
   bool get vibrationEnabled => _vibrationEnabled;
   double get soundVolume => _soundVolume;
 
+  // Get selected locale
+  Locale get selectedLocale {
+    final languageCode = getLanguageCode();
+    return Locale(languageCode, '');
+  }
+
   Future<void> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -231,12 +237,21 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  String getLanguageCode() {
+    switch (_selectedLanguage) {
+      case 'French':
+      case 'Français':
+        return 'fr';
+      default:
+        return 'en';
+    }
+  }
+
   // Get available languages
   List<Map<String, String>> getAvailableLanguages() {
     return [
-      {'code': 'en', 'name': 'English', 'nativeName': 'English'},
-      {'code': 'fr', 'name': 'French', 'nativeName': 'Français'},
-      {'code': 'es', 'name': 'Spanish', 'nativeName': 'Español'},
+      {'name': 'English', 'nativeName': 'English', 'code': 'en'},
+      {'name': 'French', 'nativeName': 'Français', 'code': 'fr'},
     ];
   }
 
@@ -244,8 +259,17 @@ class SettingsProvider extends ChangeNotifier {
   ThemeData getThemeData(BuildContext context) {
     final baseTheme = _darkModeEnabled ? ThemeData.dark() : ThemeData.light();
 
+    // Ensure text scale factor is valid
+    final safeFontSizeFactor =
+        (_textScaleFactor > 0.0 && _textScaleFactor <= 3.0)
+            ? _textScaleFactor
+            : 1.0;
+
     return baseTheme.copyWith(
-      textTheme: baseTheme.textTheme.apply(fontSizeFactor: _textScaleFactor),
+      textTheme:
+          safeFontSizeFactor != 1.0
+              ? baseTheme.textTheme.apply(fontSizeFactor: safeFontSizeFactor)
+              : baseTheme.textTheme,
       colorScheme:
           _highContrastEnabled
               ? (_darkModeEnabled

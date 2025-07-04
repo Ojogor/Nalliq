@@ -19,6 +19,8 @@ class _IncomingRequestsScreenState extends State<IncomingRequestsScreen> {
   bool _isLoading = true;
   List<ExchangeRequest> _incomingRequests = [];
   String? _error;
+  Map<String, String> _userDisplayNames = {}; // Cache for user display names
+  Map<String, String> _itemNames = {}; // Cache for item names
 
   @override
   void initState() {
@@ -102,6 +104,62 @@ class _IncomingRequestsScreenState extends State<IncomingRequestsScreen> {
         ),
       );
     }
+  }
+
+  Future<String> _getUserDisplayName(String userId) async {
+    // Check cache first
+    if (_userDisplayNames.containsKey(userId)) {
+      return _userDisplayNames[userId]!;
+    }
+
+    try {
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        final userData = userDoc.data() as Map<String, dynamic>;
+        final displayName =
+            userData['displayName'] ?? userData['email'] ?? 'Unknown User';
+        _userDisplayNames[userId] = displayName;
+        return displayName;
+      } else {
+        _userDisplayNames[userId] = 'Unknown User';
+        return 'Unknown User';
+      }
+    } catch (e) {
+      print('Error fetching user display name for $userId: $e');
+      _userDisplayNames[userId] = 'Unknown User';
+      return 'Unknown User';
+    }
+  }
+
+  Future<String> _getItemName(String itemId) async {
+    // Check cache first
+    if (_itemNames.containsKey(itemId)) {
+      return _itemNames[itemId]!;
+    }
+
+    try {
+      final itemDoc = await _firestore.collection('items').doc(itemId).get();
+      if (itemDoc.exists) {
+        final itemData = itemDoc.data() as Map<String, dynamic>;
+        final itemName = itemData['name'] ?? 'Unknown Item';
+        _itemNames[itemId] = itemName;
+        return itemName;
+      } else {
+        _itemNames[itemId] = 'Unknown Item';
+        return 'Unknown Item';
+      }
+    } catch (e) {
+      print('Error fetching item name for $itemId: $e');
+      _itemNames[itemId] = 'Unknown Item';
+      return 'Unknown Item';
+    }
+  }
+
+  Future<String> _getItemNames(List<String> itemIds) async {
+    if (itemIds.isEmpty) return 'None';
+
+    final names = await Future.wait(itemIds.map((id) => _getItemName(id)));
+    return names.join(', ');
   }
 
   @override
@@ -211,67 +269,105 @@ class _IncomingRequestsScreenState extends State<IncomingRequestsScreen> {
   Widget _buildRequestCard(ExchangeRequest request) {
     return Card(
       margin: const EdgeInsets.only(bottom: AppDimensions.marginM),
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.paddingM),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Request from ${request.requesterId}', // TODO: Get actual user name
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: AppDimensions.marginS),
-            Text(
-              'Requested Items: ${request.requestedItemIds.join(", ")}',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            if (request.offeredItemIds.isNotEmpty) ...[
-              const SizedBox(height: AppDimensions.marginS),
-              Text(
-                'Offered Items: ${request.offeredItemIds.join(", ")}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
-            if (request.message != null && request.message!.isNotEmpty) ...[
-              const SizedBox(height: AppDimensions.marginS),
-              Text(
-                'Message: ${request.message}',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
-              ),
-            ],
-            const SizedBox(height: AppDimensions.marginS),
-            Text(
-              'Sent: ${_formatDate(request.createdAt)}',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: AppDimensions.marginM),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed:
-                      () => _respondToRequest(request, RequestStatus.declined),
-                  child: const Text('Decline'),
-                ),
-                const SizedBox(width: AppDimensions.marginS),
-                ElevatedButton(
-                  onPressed:
-                      () => _respondToRequest(request, RequestStatus.accepted),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
-                    foregroundColor: AppColors.white,
+      child: InkWell(
+        onTap: () {
+          context.pushNamed(
+            'barter-detail',
+            pathParameters: {'requestId': request.id},
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.paddingM),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: FutureBuilder<String>(
+                      future: _getUserDisplayName(request.requesterId),
+                      builder: (context, snapshot) {
+                        final displayName = snapshot.data ?? 'Loading...';
+                        return Text(
+                          'Request from $displayName',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        );
+                      },
+                    ),
                   ),
-                  child: const Text('Accept'),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Colors.grey[600],
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppDimensions.marginS),
+              FutureBuilder<String>(
+                future: _getItemNames(request.requestedItemIds),
+                builder: (context, snapshot) {
+                  final itemNames = snapshot.data ?? 'Loading...';
+                  return Text(
+                    'Requested Items: $itemNames',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  );
+                },
+              ),
+              if (request.offeredItemIds.isNotEmpty) ...[
+                const SizedBox(height: AppDimensions.marginS),
+                FutureBuilder<String>(
+                  future: _getItemNames(request.offeredItemIds),
+                  builder: (context, snapshot) {
+                    final itemNames = snapshot.data ?? 'Loading...';
+                    return Text(
+                      'Offered Items: $itemNames',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    );
+                  },
                 ),
               ],
-            ),
-          ],
+              if (request.message != null && request.message!.isNotEmpty) ...[
+                const SizedBox(height: AppDimensions.marginS),
+                Text(
+                  'Message: ${request.message}',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
+                ),
+              ],
+              const SizedBox(height: AppDimensions.marginS),
+              Text(
+                'Sent: ${_formatDate(request.createdAt)}',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: AppDimensions.marginM),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed:
+                        () =>
+                            _respondToRequest(request, RequestStatus.declined),
+                    child: const Text('Decline'),
+                  ),
+                  const SizedBox(width: AppDimensions.marginS),
+                  ElevatedButton(
+                    onPressed:
+                        () =>
+                            _respondToRequest(request, RequestStatus.accepted),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryGreen,
+                      foregroundColor: AppColors.white,
+                    ),
+                    child: const Text('Accept'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

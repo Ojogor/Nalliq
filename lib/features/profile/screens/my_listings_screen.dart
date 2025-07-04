@@ -15,8 +15,10 @@ class MyListingsScreen extends StatefulWidget {
   State<MyListingsScreen> createState() => _MyListingsScreenState();
 }
 
-class _MyListingsScreenState extends State<MyListingsScreen> {
+class _MyListingsScreenState extends State<MyListingsScreen>
+    with SingleTickerProviderStateMixin {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  late TabController _tabController;
   bool _isLoading = true;
   List<FoodItem> _myItems = [];
   String? _error;
@@ -24,11 +26,26 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     _loadMyListings();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reload data when the screen comes into focus
+    _loadMyListings();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadMyListings() async {
     try {
+      print('🔄 Loading my listings...');
       setState(() {
         _isLoading = true;
         _error = null;
@@ -36,6 +53,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
 
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       if (authProvider.user == null) {
+        print('❌ User not authenticated');
         setState(() {
           _isLoading = false;
           _error = 'User not authenticated';
@@ -43,6 +61,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
         return;
       }
 
+      print('👤 Loading items for user: ${authProvider.user!.uid}');
       final query =
           await _firestore
               .collection('items')
@@ -53,14 +72,19 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
       final items =
           query.docs.map((doc) => FoodItem.fromFirestore(doc)).toList();
 
+      print('📋 Loaded ${items.length} items from Firebase');
+      for (int i = 0; i < items.length; i++) {
+        print('   Item $i: ${items[i].name} (${items[i].id})');
+      }
+
       setState(() {
         _myItems = items;
         _isLoading = false;
       });
 
-      print('Loaded ${items.length} user items'); // Debug logging
+      print('✅ My listings loaded successfully'); // Debug logging
     } catch (e) {
-      print('Error loading my listings: $e');
+      print('❌ Error loading my listings: $e');
       setState(() {
         _error = e.toString();
         _isLoading = false;
@@ -86,25 +110,42 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () => context.pushNamed('add-item'),
+            onPressed: () => context.pushNamed('enhanced-add-item'),
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: AppColors.white,
+          unselectedLabelColor: AppColors.white.withOpacity(0.7),
+          indicatorColor: AppColors.white,
+          tabs: const [Tab(text: 'Published'), Tab(text: 'Drafts')],
+        ),
       ),
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _loadMyListings,
-          child:
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _error != null
-                  ? _buildErrorState()
-                  : _buildContent(),
+        child: TabBarView(
+          controller: _tabController,
+          children: [
+            // Published tab
+            RefreshIndicator(
+              onRefresh: _loadMyListings,
+              child:
+                  _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _error != null
+                      ? _buildErrorState()
+                      : _buildPublishedContent(),
+            ),
+            // Drafts tab
+            _buildDraftsContent(),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildErrorState() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -120,9 +161,9 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           const SizedBox(height: AppDimensions.marginM),
           Text(
             _error!,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: isDark ? Colors.white70 : AppColors.textSecondary,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppDimensions.marginL),
@@ -139,31 +180,37 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildPublishedContent() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     if (_myItems.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.inventory_2_outlined, size: 80, color: AppColors.grey),
+            Icon(
+              Icons.inventory_2_outlined,
+              size: 80,
+              color: isDark ? Colors.white54 : AppColors.grey,
+            ),
             const SizedBox(height: AppDimensions.marginL),
             Text(
               'No listings yet',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: AppColors.textSecondary,
+                color: isDark ? Colors.white70 : AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: AppDimensions.marginM),
             Text(
               'Start sharing food with your community!',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: isDark ? Colors.white70 : AppColors.textSecondary,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppDimensions.marginL),
             ElevatedButton.icon(
-              onPressed: () => context.pushNamed('add-item'),
+              onPressed: () => context.pushNamed('enhanced-add-item'),
               icon: const Icon(Icons.add),
               label: const Text('Add Your First Item'),
               style: ElevatedButton.styleFrom(
@@ -193,6 +240,48 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           showAddButton: false, // Never show add to cart for own items
         );
       },
+    );
+  }
+
+  Widget _buildDraftsContent() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.drafts_outlined,
+            size: 80,
+            color: isDark ? Colors.white54 : AppColors.grey,
+          ),
+          const SizedBox(height: AppDimensions.marginL),
+          Text(
+            'No drafts yet',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: isDark ? Colors.white70 : AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.marginM),
+          Text(
+            'Drafts are saved automatically while creating new listings.\nFinish your current listing to see it here.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: isDark ? Colors.white70 : AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppDimensions.marginL),
+          ElevatedButton.icon(
+            onPressed: () => context.pushNamed('enhanced-add-item'),
+            icon: const Icon(Icons.edit),
+            label: const Text('Create New Listing'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+              foregroundColor: AppColors.white,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

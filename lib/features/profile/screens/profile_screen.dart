@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../trust/providers/trust_score_provider.dart';
 import '../providers/profile_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -26,18 +27,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _loadData() {
     final authProvider = context.read<AuthProvider>();
     final profileProvider = context.read<ProfileProvider>();
+    final trustProvider = context.read<TrustScoreProvider>();
 
     if (authProvider.isAuthenticated && authProvider.user != null) {
       profileProvider.loadProfileData(authProvider.user!.uid);
+      trustProvider.loadTrustData(authProvider.user!.uid);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Consumer2<ProfileProvider, AuthProvider>(
-        builder: (context, profileProvider, authProvider, child) {
+      backgroundColor:
+          isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF5F5F5),
+      body: Consumer3<ProfileProvider, AuthProvider, TrustScoreProvider>(
+        builder: (
+          context,
+          profileProvider,
+          authProvider,
+          trustProvider,
+          child,
+        ) {
           if (!authProvider.isAuthenticated) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               context.goNamed('login');
@@ -55,7 +67,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 )
               else ...[
                 // User info section
-                SliverToBoxAdapter(child: _buildUserInfo(authProvider.appUser)),
+                SliverToBoxAdapter(
+                  child: _buildUserInfo(authProvider.appUser, trustProvider),
+                ),
 
                 // Stats section
                 SliverToBoxAdapter(child: _buildStats(profileProvider)),
@@ -71,34 +85,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildAppBar(AuthProvider authProvider) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return SliverAppBar(
       floating: true,
-      backgroundColor: AppColors.primaryGreen,
+      backgroundColor:
+          isDark ? const Color(0xFF2D2D30) : AppColors.primaryGreen,
       foregroundColor: AppColors.white,
       title: const Text(AppStrings.profile),
       actions: [
         IconButton(
           icon: const Icon(Icons.settings),
-          onPressed: () {
-            // Navigate to settings
-          },
+          onPressed: () => context.pushNamed('settings'),
         ),
       ],
     );
   }
 
-  Widget _buildUserInfo(user) {
+  Widget _buildUserInfo(user, TrustScoreProvider trustProvider) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.all(AppDimensions.marginM),
       padding: const EdgeInsets.all(AppDimensions.paddingL),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: isDark ? const Color(0xFF2D2D30) : Colors.white,
         borderRadius: BorderRadius.circular(AppDimensions.radiusM),
         boxShadow: [
           BoxShadow(
-            color: AppColors.grey.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: (isDark ? Colors.black : Colors.grey).withOpacity(0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -125,9 +142,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // Name
           Text(
             user?.displayName ?? 'User',
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+            ),
           ),
 
           const SizedBox(height: AppDimensions.marginS),
@@ -135,9 +154,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // Email
           Text(
             user?.email ?? '',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            style: TextStyle(
+              fontSize: 14,
+              color: isDark ? const Color(0xFFB0B0B0) : const Color(0xFF1A1A1A),
+            ),
           ),
 
           const SizedBox(height: AppDimensions.marginM),
@@ -148,15 +168,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Icon(
                 Icons.verified,
-                color: _getTrustColor(user?.trustLevel),
+                color: _getTrustColorFromScore(
+                  trustProvider.getCurrentTrustScore(),
+                ),
                 size: 20,
               ),
               const SizedBox(width: AppDimensions.marginS),
               Text(
-                'Trust Score: ${user?.trustScore?.toStringAsFixed(1) ?? '0.0'}',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                'Trust Score: ${trustProvider.getCurrentTrustScore().toStringAsFixed(1)}',
+                style: TextStyle(
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: _getTrustColor(user?.trustLevel),
+                  color: _getTrustColorFromScore(
+                    trustProvider.getCurrentTrustScore(),
+                  ),
                 ),
               ),
             ],
@@ -166,7 +191,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           // Improve trust score button
           ElevatedButton.icon(
-            onPressed: () => _showTrustScoreDialog(context, user),
+            onPressed: () => context.pushNamed('trust-score'),
             icon: const Icon(Icons.trending_up),
             label: const Text('Improve Trust Score'),
             style: ElevatedButton.styleFrom(
@@ -225,16 +250,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     IconData icon,
     Color color,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingM),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: isDark ? const Color(0xFF2D2D30) : Colors.white,
         borderRadius: BorderRadius.circular(AppDimensions.radiusM),
         boxShadow: [
           BoxShadow(
-            color: AppColors.grey.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: (isDark ? Colors.black : Colors.grey).withOpacity(0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -244,16 +271,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: AppDimensions.marginS),
           Text(
             value,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            style: TextStyle(
+              fontSize: 18,
               fontWeight: FontWeight.bold,
               color: color,
             ),
           ),
           Text(
             title,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? const Color(0xFFB0B0B0) : const Color(0xFF666666),
+            ),
           ),
         ],
       ),
@@ -261,16 +290,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildMenuItems(AuthProvider authProvider) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.all(AppDimensions.marginM),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: isDark ? const Color(0xFF2D2D30) : Colors.white,
         borderRadius: BorderRadius.circular(AppDimensions.radiusM),
         boxShadow: [
           BoxShadow(
-            color: AppColors.grey.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: (isDark ? Colors.black : Colors.grey).withOpacity(0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -305,22 +336,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: AppStrings.history,
             onTap: () => context.pushNamed('history'),
           ),
-          _buildDivider(),
-          _buildMenuItem(
-            icon: Icons.bug_report,
-            title: 'Debug Panel (Dev Only)',
-            onTap: () => context.pushNamed('debug'),
-            textColor: AppColors.warning,
-            iconColor: AppColors.warning,
-          ),
-          _buildDivider(),
-          _buildMenuItem(
-            icon: Icons.logout,
-            title: AppStrings.logout,
-            onTap: () => _handleLogout(authProvider),
-            textColor: AppColors.error,
-            iconColor: AppColors.error,
-          ),
         ],
       ),
     );
@@ -333,64 +348,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Color? textColor,
     Color? iconColor,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return ListTile(
-      leading: Icon(icon, color: iconColor ?? AppColors.grey),
+      leading: Icon(
+        icon,
+        color: iconColor ?? (isDark ? Colors.white70 : AppColors.grey),
+      ),
       title: Text(
         title,
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-          color: textColor ?? AppColors.textPrimary,
+          color: textColor ?? (isDark ? Colors.white : AppColors.textPrimary),
         ),
       ),
-      trailing: const Icon(Icons.chevron_right, color: AppColors.grey),
+      trailing: Icon(
+        Icons.chevron_right,
+        color: isDark ? Colors.white70 : AppColors.grey,
+      ),
       onTap: onTap,
     );
   }
 
   Widget _buildDivider() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Divider(
       height: 1,
-      color: AppColors.grey.withOpacity(0.2),
+      color: (isDark ? Colors.white : AppColors.grey).withOpacity(0.2),
       indent: 16,
       endIndent: 16,
     );
   }
 
-  Color _getTrustColor(trustLevel) {
-    // Default implementation
-    return AppColors.primaryGreen;
-  }
-
-  void _showTrustScoreDialog(BuildContext context, user) {
-    showDialog(
-      context: context,
-      builder: (context) => TrustScoreDialog(user: user),
-    );
-  }
-
-  void _handleLogout(AuthProvider authProvider) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Logout'),
-            content: const Text('Are you sure you want to logout?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  authProvider.signOut();
-                  context.goNamed('login');
-                },
-                style: TextButton.styleFrom(foregroundColor: AppColors.error),
-                child: const Text('Logout'),
-              ),
-            ],
-          ),
-    );
+  Color _getTrustColorFromScore(double score) {
+    if (score >= 8.0) return const Color(0xFF4CAF50); // Green
+    if (score >= 6.0) return const Color(0xFF8BC34A); // Light Green
+    if (score >= 4.0) return const Color(0xFFFFC107); // Amber
+    if (score >= 2.0) return const Color(0xFFFF9800); // Orange
+    return const Color(0xFF757575); // Grey
   }
 }
 
@@ -405,108 +400,208 @@ class TrustScoreDialog extends StatefulWidget {
 
 class _TrustScoreDialogState extends State<TrustScoreDialog> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final trustProvider = Provider.of<TrustScoreProvider>(
+        context,
+        listen: false,
+      );
+      if (authProvider.user != null) {
+        trustProvider.loadTrustData(authProvider.user!.uid);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Row(
-        children: [
-          Icon(Icons.verified, color: AppColors.primaryGreen),
-          const SizedBox(width: 8),
-          const Text('Trust Score'),
-        ],
-      ),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Current trust score
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.lightGrey,
-                borderRadius: BorderRadius.circular(8),
+    return Consumer2<TrustScoreProvider, AuthProvider>(
+      builder: (context, trustProvider, authProvider, child) {
+        final summary = trustProvider.trustSummary;
+        final currentScore = summary?.totalScore ?? 0.0;
+        final isLoading = trustProvider.isLoading;
+
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.verified, color: AppColors.primaryGreen),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text('Trust Score', overflow: TextOverflow.ellipsis),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Current Score:',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
+            ],
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: MediaQuery.of(context).size.height * 0.6, // Limit height
+            child:
+                isLoading
+                    ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20),
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                    : SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Current trust score
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).cardColor,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppColors.primaryGreen.withOpacity(0.2),
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primaryGreen.withOpacity(
+                                    0.1,
+                                  ),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.verified,
+                                      color: AppColors.primaryGreen,
+                                      size: 28,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        'Your Trust Score',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleLarge?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.primaryGreen,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  '${currentScore.toStringAsFixed(1)}',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.displayMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primaryGreen,
+                                  ),
+                                ),
+                                Text(
+                                  'out of 10.0',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.bodyMedium?.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.trending_up,
+                                color: AppColors.primaryGreen,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Ways to improve your trust score:',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Trust score improvement options
+                          _buildTrustScoreOption(
+                            context,
+                            Icons.verified_user,
+                            'ID Verification',
+                            '+2.0 points',
+                            'Verify your identity with official documents',
+                            AppColors.info,
+                            !trustProvider.isIDVerified(),
+                          ),
+
+                          _buildTrustScoreOption(
+                            context,
+                            Icons.school,
+                            'Food Safety Certifications',
+                            '+1.5 points',
+                            'Complete food safety certifications',
+                            AppColors.primaryOrange,
+                            true, // Always available to get more certifications
+                          ),
+
+                          _buildTrustScoreOption(
+                            context,
+                            Icons.swap_horiz,
+                            'Complete Exchanges',
+                            '+0.5 points each',
+                            'Successfully complete barter exchanges',
+                            AppColors.primaryGreen,
+                            true, // Always available
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          Text(
+                            'Note: Trust score may be reduced for negative actions like failing to complete exchanges, reporting violations, etc.',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodySmall?.copyWith(
+                              color: AppColors.textSecondary,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Text(
-                    '${widget.user?.trustScore?.toStringAsFixed(1) ?? '0.0'}/10.0',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primaryGreen,
-                    ),
-                  ),
-                ],
-              ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => context.pop(),
+              child: const Text('Close'),
             ),
-
-            const SizedBox(height: 16),
-
-            Text(
-              'Ways to improve your trust score:',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Trust score improvement options
-            _buildTrustScoreOption(
-              context,
-              Icons.verified_user,
-              'ID Verification',
-              '+2.0 points',
-              'Verify your identity with official documents',
-              AppColors.info,
-              !(widget.user?.idVerified ?? false),
-            ),
-
-            _buildTrustScoreOption(
-              context,
-              Icons.quiz,
-              'Food Safety QA',
-              '+1.5 points',
-              'Complete food safety questionnaire',
-              AppColors.primaryOrange,
-              !(widget.user?.foodSafetyQACompleted ?? false),
-            ),
-
-            _buildTrustScoreOption(
-              context,
-              Icons.swap_horiz,
-              'Complete Barters',
-              '+0.5 points each',
-              'Successfully complete barter exchanges',
-              AppColors.primaryGreen,
-              true, // Always available
-            ),
-
-            const SizedBox(height: 16),
-
-            Text(
-              'Note: Trust score may be reduced for negative actions like failing to complete exchanges, reporting violations, etc.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
-                fontStyle: FontStyle.italic,
-              ),
+            ElevatedButton(
+              onPressed: () {
+                context.pop();
+                context.pushNamed('trust-score');
+              },
+              child: const Text('View Details'),
             ),
           ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Close'),
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -519,38 +614,92 @@ class _TrustScoreDialogState extends State<TrustScoreDialog> {
     Color color,
     bool isAvailable,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        border: Border.all(color: color.withOpacity(0.3)),
+        color: isDark ? const Color(0xFF2C2C2C) : AppColors.white,
         borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: (isDark ? Colors.black : AppColors.grey).withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.2),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
           child: Icon(icon, color: color, size: 20),
         ),
         title: Row(
           children: [
-            Expanded(child: Text(title)),
-            Text(
-              points,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: color,
-                fontWeight: FontWeight.w600,
+            Expanded(
+              flex: 2,
+              child: Text(
+                title,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  points,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
           ],
         ),
-        subtitle: Text(description),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            description,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: isDark ? Colors.grey[400] : AppColors.textSecondary,
+            ),
+          ),
+        ),
         trailing:
             isAvailable
-                ? Icon(Icons.arrow_forward_ios, size: 16, color: color)
-                : Text(
-                  'Completed',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.success,
-                    fontWeight: FontWeight.w600,
+                ? Icon(Icons.chevron_right, size: 20, color: color)
+                : Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Completed',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
         onTap: isAvailable ? () => _handleTrustScoreAction(title) : null,
@@ -559,59 +708,24 @@ class _TrustScoreDialogState extends State<TrustScoreDialog> {
   }
 
   void _handleTrustScoreAction(String action) async {
-    final profileProvider = context.read<ProfileProvider>();
-    final authProvider = context.read<AuthProvider>();
-
-    Navigator.of(context).pop();
+    context.pop();
 
     switch (action) {
       case 'ID Verification':
-        final success = await profileProvider.completeIDVerification(
-          authProvider.user!.uid,
-        );
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'ID verification completed! +2.0 trust score points',
-              ),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: ${profileProvider.error}'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
+        context.push('/id-verification');
         break;
-      case 'Food Safety QA':
-        final success = await profileProvider.completeFoodSafetyQA(
-          authProvider.user!.uid,
-        );
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Food safety QA completed! +1.5 trust score points',
-              ),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: ${profileProvider.error}'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
+      case 'Food Safety Certifications':
+        context.push('/certifications');
         break;
-      case 'Complete Barters':
-        // Navigate to barter/exchange screen
-        context.goNamed('home');
+      case 'Complete Exchanges':
+        // Navigate to exchanges or show info
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Complete successful exchanges to earn trust points!',
+            ),
+          ),
+        );
         break;
     }
   }

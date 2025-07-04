@@ -20,15 +20,17 @@ class FoodItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: isDark ? const Color(0xFF2D2D30) : AppColors.white,
           borderRadius: BorderRadius.circular(AppDimensions.radiusM),
           boxShadow: [
             BoxShadow(
-              color: AppColors.grey.withOpacity(0.1),
+              color: (isDark ? Colors.black : AppColors.grey).withOpacity(0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -46,25 +48,24 @@ class FoodItemCard extends StatelessWidget {
                 padding: const EdgeInsets.all(AppDimensions.paddingM),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     // Item name and condition
                     _buildHeader(context),
 
-                    const SizedBox(height: AppDimensions.marginXS),
-
+                    const SizedBox(height: 4), // Reduced spacing
                     // Description
-                    _buildDescription(context),
+                    Flexible(child: _buildDescription(context)),
 
-                    const SizedBox(height: AppDimensions.marginS),
-
+                    const SizedBox(height: 6), // Reduced spacing
                     // Quantity and expiry
                     _buildDetails(context),
 
-                    const Spacer(),
-
-                    // Add to cart button
-                    if (showAddButton && onAddToCart != null)
+                    // Add spacing only if there's an add button
+                    if (showAddButton && onAddToCart != null) ...[
+                      const SizedBox(height: 8), // Minimal spacing
                       _buildAddButton(context),
+                    ],
                   ],
                 ),
               ),
@@ -166,6 +167,8 @@ class FoodItemCard extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Row(
       children: [
         Expanded(
@@ -173,7 +176,7 @@ class FoodItemCard extends StatelessWidget {
             item.name,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: isDark ? Colors.white : AppColors.textPrimary,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -202,37 +205,58 @@ class FoodItemCard extends StatelessWidget {
   }
 
   Widget _buildDescription(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Text(
       item.description,
-      style: Theme.of(
-        context,
-      ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        color: isDark ? Colors.white70 : AppColors.textSecondary,
+        fontSize: 11, // Slightly smaller font
+      ),
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
     );
   }
 
   Widget _buildDetails(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Row(
       children: [
-        Icon(Icons.scale, size: 14, color: AppColors.grey),
-        const SizedBox(width: 4),
-        Text(
-          '${item.quantity} ${item.unit}',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: AppColors.textSecondary,
-            fontWeight: FontWeight.w500,
+        Icon(
+          Icons.scale,
+          size: 12,
+          color: isDark ? Colors.white54 : AppColors.grey,
+        ),
+        const SizedBox(width: 3),
+        Flexible(
+          child: Text(
+            '${item.quantity} ${item.unit}',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: isDark ? Colors.white70 : AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+              fontSize: 10,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         if (item.expiryDate != null) ...[
-          const SizedBox(width: AppDimensions.marginS),
-          Icon(Icons.calendar_today, size: 14, color: AppColors.grey),
-          const SizedBox(width: 4),
-          Text(
-            _formatDate(item.expiryDate!),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
+          const SizedBox(width: 8),
+          Icon(
+            Icons.calendar_today,
+            size: 12,
+            color: isDark ? Colors.white54 : AppColors.grey,
+          ),
+          const SizedBox(width: 3),
+          Flexible(
+            child: Text(
+              _formatDate(item.expiryDate!),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: isDark ? Colors.white70 : AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+                fontSize: 10,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -243,7 +267,7 @@ class FoodItemCard extends StatelessWidget {
   Widget _buildAddButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 32,
+      height: 28, // Reduced height
       child: ElevatedButton(
         onPressed: onAddToCart,
         style: ElevatedButton.styleFrom(
@@ -256,7 +280,10 @@ class FoodItemCard extends StatelessWidget {
         ),
         child: const Text(
           'Add to Cart',
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ), // Smaller font
         ),
       ),
     );

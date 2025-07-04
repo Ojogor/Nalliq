@@ -306,12 +306,12 @@ class _ImproveTrustScoreScreenState extends State<ImproveTrustScoreScreen> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => context.pop(),
                 child: const Text('OK'),
               ),
               ElevatedButton(
                 onPressed: () async {
-                  Navigator.of(context).pop();
+                  context.pop();
                   // Simulate ID verification completion
                   final success = await trustProvider.updateTrustScore(
                     TrustScoreAction.idVerification,
@@ -347,12 +347,12 @@ class _ImproveTrustScoreScreenState extends State<ImproveTrustScoreScreen> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => context.pop(),
                 child: const Text('Cancel'),
               ),
               ElevatedButton(
                 onPressed: () async {
-                  Navigator.of(context).pop();
+                  context.pop();
                   // Simulate quiz completion
                   final success = await trustProvider.updateTrustScore(
                     TrustScoreAction.foodSafetyQA,

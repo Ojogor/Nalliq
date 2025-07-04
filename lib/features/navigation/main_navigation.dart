@@ -13,14 +13,15 @@ class MainNavigation extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final isFoodBank = authProvider.appUser?.role == 'foodBank';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       body: SafeArea(child: child),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        backgroundColor: AppColors.surface,
+        backgroundColor: isDark ? const Color(0xFF2D2D30) : AppColors.surface,
         selectedItemColor: AppColors.primaryGreen,
-        unselectedItemColor: AppColors.grey,
+        unselectedItemColor: isDark ? Colors.white54 : AppColors.grey,
         currentIndex: _calculateSelectedIndex(context),
         onTap: (index) => _onItemTapped(index, context),
         items: const [
@@ -44,7 +45,7 @@ class MainNavigation extends StatelessWidget {
       floatingActionButton:
           isFoodBank
               ? FloatingActionButton(
-                onPressed: () => context.pushNamed('add-item'),
+                onPressed: () => context.pushNamed('enhanced-add-item'),
                 backgroundColor: AppColors.primaryOrange,
                 child: const Icon(Icons.add, color: AppColors.white),
                 tooltip: 'Add Food Listing',

@@ -204,21 +204,7 @@ class ProfileProvider extends ChangeNotifier {
         'friendIds': updatedFriendIds,
       });
 
-      // Add current user to friend's friend list
-      final friendDoc =
-          await _firestore.collection('users').doc(friendUserId).get();
-
-      if (friendDoc.exists) {
-        final friendData = friendDoc.data() as Map<String, dynamic>;
-        final friendFriendIds = List<String>.from(
-          friendData['friendIds'] ?? [],
-        );
-        friendFriendIds.add(_currentUser!.id);
-
-        await _firestore.collection('users').doc(friendUserId).update({
-          'friendIds': friendFriendIds,
-        });
-      }
+      // Only add to current user's friend list (one-way connection)
 
       // Update local data
       _currentUser = _currentUser!.copyWith(friendIds: updatedFriendIds);
@@ -397,6 +383,21 @@ class ProfileProvider extends ChangeNotifier {
   /// Add trust score for completed barter
   Future<void> addBarterCompletionScore(String userId) async {
     await updateTrustScore(userId, 0.5, 'Barter Exchange Completed');
+
+    // Also create a trust score entry for tracking
+    try {
+      await _firestore.collection('trust_score_entries').add({
+        'userId': userId,
+        'action': 'successfulExchange',
+        'points': 0.5,
+        'description': 'Completed a successful barter exchange',
+        'timestamp': Timestamp.fromDate(DateTime.now()),
+        'relatedId': null,
+        'metadata': {'type': 'barter_completion'},
+      });
+    } catch (e) {
+      print('Error creating trust score entry: $e');
+    }
   }
 
   /// Deduct trust score for negative actions
@@ -406,5 +407,20 @@ class ProfileProvider extends ChangeNotifier {
     String reason,
   ) async {
     await updateTrustScore(userId, -amount, reason);
+
+    // Also create a trust score entry for tracking
+    try {
+      await _firestore.collection('trust_score_entries').add({
+        'userId': userId,
+        'action': 'violation',
+        'points': -amount,
+        'description': reason,
+        'timestamp': Timestamp.fromDate(DateTime.now()),
+        'relatedId': null,
+        'metadata': {'type': 'trust_penalty'},
+      });
+    } catch (e) {
+      print('Error creating trust score entry: $e');
+    }
   }
 }

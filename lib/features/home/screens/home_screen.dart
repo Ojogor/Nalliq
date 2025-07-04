@@ -54,11 +54,6 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.shopping_cart_outlined),
             onPressed: () => context.pushNamed('cart'),
           ),
-          IconButton(
-            icon: const Icon(Icons.bug_report),
-            onPressed: () => context.push('/debug'),
-            tooltip: 'Debug',
-          ),
         ],
       ),
       body: SafeArea(
@@ -72,12 +67,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ? const Center(child: CircularProgressIndicator())
                   : _buildHomeContent(homeProvider),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        mini: true,
-        onPressed: () => context.push('/debug'),
-        tooltip: 'Debug',
-        child: const Icon(Icons.bug_report),
       ),
     );
   }
