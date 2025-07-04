@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/models/food_item_model.dart';
+import '../../exchange/providers/exchange_provider.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../providers/cart_provider.dart';
 import '../widgets/cart_item_tile.dart';
 
@@ -216,17 +219,114 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  void _sendRequests(BuildContext context, CartProvider cartProvider) {
-    // TODO: Implement request sending logic
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Requests sent successfully!'),
-        backgroundColor: AppColors.primaryGreen,
-      ),
+  Future<void> _sendRequests(
+    BuildContext context,
+    CartProvider cartProvider,
+  ) async {
+    final authProvider = context.read<AuthProvider>();
+    final exchangeProvider = context.read<ExchangeProvider>();
+
+    if (!authProvider.isAuthenticated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please log in to send requests'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    final barterItems = cartProvider.barterItems;
+    final donationItems = cartProvider.donationItems;
+
+    bool hasSuccess = false;
+
+    try {
+      // Send donation requests
+      if (donationItems.isNotEmpty) {
+        final donationItemIds =
+            donationItems.map((item) => item.item.id).toList();
+        final success = await exchangeProvider.sendDonationRequest(
+          requestedItemIds: donationItemIds,
+          message: 'Request for donation from cart',
+        );
+        if (success) hasSuccess = true;
+      }
+
+      // Send barter requests - need to show item selection for what to offer
+      if (barterItems.isNotEmpty) {
+        final result = await _showBarterItemSelection(context, barterItems);
+        if (result != null && result.isNotEmpty) {
+          final barterItemIds =
+              barterItems.map((item) => item.item.id).toList();
+          final success = await exchangeProvider.sendBarterRequest(
+            requestedItemIds: barterItemIds,
+            offeredItemIds: result,
+            message: 'Barter request from cart',
+          );
+          if (success) hasSuccess = true;
+        }
+      }
+
+      if (hasSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Requests sent successfully!'),
+            backgroundColor: AppColors.primaryGreen,
+          ),
+        );
+        // Clear cart after sending requests
+        cartProvider.clearCart();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No requests were sent'),
+            backgroundColor: AppColors.warning,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error sending requests: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
+  Future<List<String>?> _showBarterItemSelection(
+    BuildContext context,
+    List<CartItem> barterItems,
+  ) async {
+    final authProvider = context.read<AuthProvider>();
+    final exchangeProvider = context.read<ExchangeProvider>();
+
+    // Get user's available items for barter
+    final availableItems = await exchangeProvider.getUserAvailableItems(
+      authProvider.user!.uid,
     );
 
-    // Clear cart after sending requests
-    cartProvider.clearCart();
+    if (availableItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'You have no items available for barter. Please add some items first.',
+          ),
+          backgroundColor: AppColors.warning,
+        ),
+      );
+      return null;
+    }
+
+    return showDialog<List<String>>(
+      context: context,
+      builder:
+          (context) => BarterItemSelectionDialog(
+            availableItems: availableItems,
+            requestedItems: barterItems,
+          ),
+    );
   }
 
   void _showClearCartDialog(BuildContext context, CartProvider cartProvider) {
@@ -240,19 +340,131 @@ class CartScreen extends StatelessWidget {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => context.pop(),
                 child: const Text('Cancel'),
               ),
               TextButton(
                 onPressed: () {
                   cartProvider.clearCart();
-                  Navigator.of(context).pop();
+                  context.pop();
                 },
                 style: TextButton.styleFrom(foregroundColor: AppColors.error),
                 child: const Text('Clear'),
               ),
             ],
           ),
+    );
+  }
+}
+
+class BarterItemSelectionDialog extends StatefulWidget {
+  final List<FoodItem> availableItems;
+  final List<CartItem> requestedItems;
+
+  const BarterItemSelectionDialog({
+    super.key,
+    required this.availableItems,
+    required this.requestedItems,
+  });
+
+  @override
+  State<BarterItemSelectionDialog> createState() =>
+      _BarterItemSelectionDialogState();
+}
+
+class _BarterItemSelectionDialogState extends State<BarterItemSelectionDialog> {
+  final Set<String> _selectedItemIds = {};
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Select Items to Offer'),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 400,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Choose items to offer in exchange for:',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 8),
+            // Show requested items
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.lightGrey,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Requested items:',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  ...widget.requestedItems.map(
+                    (cartItem) => Text(
+                      '• ${cartItem.item.name}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Your available items:',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: ListView.builder(
+                itemCount: widget.availableItems.length,
+                itemBuilder: (context, index) {
+                  final item = widget.availableItems[index];
+                  final isSelected = _selectedItemIds.contains(item.id);
+
+                  return CheckboxListTile(
+                    title: Text(item.name),
+                    subtitle: Text('${item.quantity} ${item.unit}'),
+                    value: isSelected,
+                    onChanged: (value) {
+                      setState(() {
+                        if (value == true) {
+                          _selectedItemIds.add(item.id);
+                        } else {
+                          _selectedItemIds.remove(item.id);
+                        }
+                      });
+                    },
+                    activeColor: AppColors.primaryGreen,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => context.pop(), child: const Text('Cancel')),
+        ElevatedButton(
+          onPressed:
+              _selectedItemIds.isEmpty
+                  ? null
+                  : () => context.pop(_selectedItemIds.toList()),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primaryGreen,
+          ),
+          child: const Text('Send Barter Request'),
+        ),
+      ],
     );
   }
 }

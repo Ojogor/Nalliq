@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/models/food_item_model.dart';
 import '../providers/item_provider.dart';
 import '../../cart/providers/cart_provider.dart';
+import '../../auth/providers/auth_provider.dart';
 
 class ItemDetailScreen extends StatefulWidget {
   final String itemId;
@@ -41,7 +43,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor:
+          Theme.of(context).brightness == Brightness.dark
+              ? Colors.grey[900]
+              : AppColors.background,
       body:
           _isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -57,16 +62,30 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.primaryGreen,
         foregroundColor: AppColors.white,
+        automaticallyImplyLeading: true,
       ),
-      body: const Center(
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: AppColors.grey),
-            SizedBox(height: AppDimensions.marginM),
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color:
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white54
+                      : AppColors.grey,
+            ),
+            const SizedBox(height: AppDimensions.marginM),
             Text(
               'Item not found',
-              style: TextStyle(fontSize: 18, color: AppColors.textSecondary),
+              style: TextStyle(
+                fontSize: 18,
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white70
+                        : AppColors.textSecondary,
+              ),
             ),
           ],
         ),
@@ -83,6 +102,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           pinned: true,
           backgroundColor: AppColors.primaryGreen,
           foregroundColor: AppColors.white,
+          automaticallyImplyLeading: true,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/home');
+              }
+            },
+          ),
           flexibleSpace: FlexibleSpaceBar(
             background:
                 _item!.imageUrls.isNotEmpty
@@ -91,27 +121,43 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       fit: BoxFit.cover,
                       placeholder:
                           (context, url) => Container(
-                            color: AppColors.lightGrey,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[800]
+                                    : AppColors.lightGrey,
                             child: const Center(
                               child: CircularProgressIndicator(),
                             ),
                           ),
                       errorWidget:
                           (context, url, error) => Container(
-                            color: AppColors.lightGrey,
-                            child: const Icon(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[800]
+                                    : AppColors.lightGrey,
+                            child: Icon(
                               Icons.restaurant,
                               size: 64,
-                              color: AppColors.grey,
+                              color:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white54
+                                      : AppColors.grey,
                             ),
                           ),
                     )
                     : Container(
-                      color: AppColors.lightGrey,
-                      child: const Icon(
+                      color:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[800]
+                              : AppColors.lightGrey,
+                      child: Icon(
                         Icons.restaurant,
                         size: 64,
-                        color: AppColors.grey,
+                        color:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white54
+                                : AppColors.grey,
                       ),
                     ),
           ),
@@ -244,15 +290,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     IconData icon, {
     bool fullWidth = false,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: fullWidth ? double.infinity : null,
       padding: const EdgeInsets.all(AppDimensions.paddingM),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: isDark ? Colors.grey[850] : AppColors.white,
         borderRadius: BorderRadius.circular(AppDimensions.radiusM),
         boxShadow: [
           BoxShadow(
-            color: AppColors.grey.withOpacity(0.1),
+            color: (isDark ? Colors.black : AppColors.grey).withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -263,12 +311,16 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: AppColors.grey),
+              Icon(
+                icon,
+                size: 16,
+                color: isDark ? Colors.white54 : AppColors.grey,
+              ),
               const SizedBox(width: AppDimensions.marginXS),
               Text(
                 title,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: isDark ? Colors.white70 : AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -277,9 +329,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           const SizedBox(height: AppDimensions.marginXS),
           Text(
             value,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : Colors.black,
+            ),
           ),
         ],
       ),
@@ -372,17 +425,31 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   }
 
   Widget _buildBottomActions() {
-    return Consumer<CartProvider>(
-      builder: (context, cartProvider, child) {
+    return Consumer2<CartProvider, AuthProvider>(
+      builder: (context, cartProvider, authProvider, child) {
+        // Check if the current user owns this item
+        final isOwnItem = authProvider.user?.uid == _item?.ownerId;
+
+        // If user owns the item, don't show the cart button
+        if (isOwnItem) {
+          return const SizedBox.shrink();
+        }
+
         final isInCart = cartProvider.isItemInCart(widget.itemId);
 
         return Container(
           padding: const EdgeInsets.all(AppDimensions.paddingM),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[900]
+                    : AppColors.white,
             boxShadow: [
               BoxShadow(
-                color: AppColors.grey.withOpacity(0.2),
+                color: (Theme.of(context).brightness == Brightness.dark
+                        ? Colors.black
+                        : AppColors.grey)
+                    .withOpacity(0.2),
                 blurRadius: 8,
                 offset: const Offset(0, -2),
               ),

@@ -160,13 +160,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => context.pop(),
                 child: const Text('Cancel'),
               ),
               ElevatedButton(
                 onPressed: () {
                   // TODO: Implement add friend functionality
-                  Navigator.of(context).pop();
+                  context.pop();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryGreen,
@@ -188,13 +188,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
             content: const Text('Are you sure you want to remove this friend?'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => context.pop(),
                 child: const Text('Cancel'),
               ),
               TextButton(
                 onPressed: () {
                   // TODO: Implement remove friend functionality
-                  Navigator.of(context).pop();
+                  context.pop();
                 },
                 style: TextButton.styleFrom(foregroundColor: AppColors.error),
                 child: const Text('Remove'),

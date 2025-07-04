@@ -46,7 +46,7 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> signInWithEmailAndPassword(
     String email,
     String password, {
-    required UserRole userRole,
+    UserRole? userRole,
   }) async {
     try {
       _isLoading = true;
@@ -61,7 +61,7 @@ class AuthProvider extends ChangeNotifier {
       if (credential.user != null) {
         await _loadUserData(credential.user!.uid);
 
-        if (_appUser != null) {
+        if (_appUser != null && userRole != null) {
           if (_appUser!.role != userRole) {
             await signOut();
             _error =

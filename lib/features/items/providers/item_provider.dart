@@ -59,6 +59,7 @@ class ItemProvider extends ChangeNotifier {
     List<String> tags = const [],
   }) async {
     try {
+      print('🚀 Starting createItem for user: $ownerId');
       _isCreating = true;
       _error = null;
       notifyListeners();
@@ -66,11 +67,14 @@ class ItemProvider extends ChangeNotifier {
       // Upload images first
       List<String> imageUrls = [];
       if (images != null && images.isNotEmpty) {
+        print('📸 Uploading ${images.length} images...');
         imageUrls = await _uploadImages(images, ownerId);
+        print('✅ Images uploaded successfully: ${imageUrls.length} URLs');
       }
 
       final itemId = _uuid.v4();
       final now = DateTime.now();
+      print('🆔 Generated item ID: $itemId');
 
       final item = FoodItem(
         id: itemId,
@@ -91,11 +95,15 @@ class ItemProvider extends ChangeNotifier {
         tags: tags,
       );
 
+      print('💾 Saving item to Firestore collection "items"...');
       await _firestore.collection('items').doc(itemId).set(item.toFirestore());
+      print('✅ Item saved successfully to Firebase!');
 
       _userItems.insert(0, item);
+      print('📝 Item added to local list. Total items: ${_userItems.length}');
       return true;
     } catch (e) {
+      print('❌ Error creating item: $e');
       _error = e.toString();
       return false;
     } finally {
@@ -185,5 +193,35 @@ class ItemProvider extends ChangeNotifier {
   void clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  // Test Firebase connection and permissions
+  Future<bool> testFirebaseConnection() async {
+    try {
+      print('🧪 Testing Firebase connection...');
+
+      // Test read permission
+      final testQuery = await _firestore.collection('items').limit(1).get();
+      print(
+        '✅ Firebase read test successful. Found ${testQuery.docs.length} documents',
+      );
+
+      // Test write permission with a dummy document
+      final testDocId = 'test_${DateTime.now().millisecondsSinceEpoch}';
+      await _firestore.collection('items').doc(testDocId).set({
+        'test': true,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+      print('✅ Firebase write test successful');
+
+      // Clean up test document
+      await _firestore.collection('items').doc(testDocId).delete();
+      print('✅ Firebase delete test successful');
+
+      return true;
+    } catch (e) {
+      print('❌ Firebase connection test failed: $e');
+      return false;
+    }
   }
 }

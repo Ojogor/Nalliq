@@ -46,48 +46,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'YOUR_WEB_API_KEY',
-    appId: 'YOUR_WEB_APP_ID',
-    messagingSenderId: 'YOUR_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    authDomain: 'YOUR_PROJECT_ID.firebaseapp.com',
-    storageBucket: 'YOUR_PROJECT_ID.firebasestorage.app',
-    measurementId: 'YOUR_MEASUREMENT_ID',
+    apiKey: 'AIzaSyB94zqobLiUfg-DpoZgkeaJ8IrG3NhUCdQ',
+    appId: '1:1036541708035:web:b15c2d0d1758793f72cb36',
+    messagingSenderId: '1036541708035',
+    projectId: 'nalliq',
+    authDomain: 'nalliq.firebaseapp.com',
+    storageBucket: 'nalliq.firebasestorage.app',
+    measurementId: 'G-7YXEZWSFZX',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR_ANDROID_API_KEY',
-    appId: 'YOUR_ANDROID_APP_ID',
-    messagingSenderId: 'YOUR_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_PROJECT_ID.firebasestorage.app',
+    apiKey: 'AIzaSyA8nEV5xpE9fgK15ZMd411s03UAJR1RPoM',
+    appId: '1:1036541708035:android:eba7983a7985ff9d72cb36',
+    messagingSenderId: '1036541708035',
+    projectId: 'nalliq',
+    storageBucket: 'nalliq.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'YOUR_IOS_API_KEY',
-    appId: 'YOUR_IOS_APP_ID',
-    messagingSenderId: 'YOUR_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_PROJECT_ID.firebasestorage.app',
-    iosBundleId: 'com.example.yourapp',
+    apiKey: 'AIzaSyBTteY03WWc4vnUk0Dge_DiYrEWrvfS4pk',
+    appId: '1:1036541708035:ios:757ee7d87142b64172cb36',
+    messagingSenderId: '1036541708035',
+    projectId: 'nalliq',
+    storageBucket: 'nalliq.firebasestorage.app',
+    iosBundleId: 'com.example.nalliq',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'YOUR_IOS_API_KEY',
-    appId: 'YOUR_IOS_APP_ID',
-    messagingSenderId: 'YOUR_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_PROJECT_ID.firebasestorage.app',
-    iosBundleId: 'com.example.yourapp',
+    apiKey: 'AIzaSyBTteY03WWc4vnUk0Dge_DiYrEWrvfS4pk',
+    appId: '1:1036541708035:ios:757ee7d87142b64172cb36',
+    messagingSenderId: '1036541708035',
+    projectId: 'nalliq',
+    storageBucket: 'nalliq.firebasestorage.app',
+    iosBundleId: 'com.example.nalliq',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'YOUR_WEB_API_KEY',
-    appId: 'YOUR_WINDOWS_APP_ID',
-    messagingSenderId: 'YOUR_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    authDomain: 'YOUR_PROJECT_ID.firebaseapp.com',
-    storageBucket: 'YOUR_PROJECT_ID.firebasestorage.app',
-    measurementId: 'YOUR_MEASUREMENT_ID',
+    apiKey: 'AIzaSyB94zqobLiUfg-DpoZgkeaJ8IrG3NhUCdQ',
+    appId: '1:1036541708035:web:8016fe08ca5c897472cb36',
+    messagingSenderId: '1036541708035',
+    projectId: 'nalliq',
+    authDomain: 'nalliq.firebaseapp.com',
+    storageBucket: 'nalliq.firebasestorage.app',
+    measurementId: 'G-CCEE76X1CC',
   );
+
 }
