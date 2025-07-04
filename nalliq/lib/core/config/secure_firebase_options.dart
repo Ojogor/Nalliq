@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -16,28 +15,18 @@ class SecureFirebaseOptions {
     if (_config != null) return; // Already loaded
 
     try {
-      final String configString;
-
-      if (kIsWeb) {
-        // For web, load from assets
-        configString = await rootBundle.loadString(
-          'config/firebase_config.json',
-        );
-      } else {
-        // For mobile/desktop, load from file system
-        final file = File('config/firebase_config.json');
-        if (await file.exists()) {
-          configString = await file.readAsString();
-        } else {
-          throw Exception(
-            'Firebase config file not found. Please copy firebase_config.template.json to firebase_config.json and fill in your credentials.',
-          );
-        }
-      }
+      // Load from assets for all platforms
+      final configString = await rootBundle.loadString(
+        'config/firebase_config.json',
+      );
 
       _config = json.decode(configString) as Map<String, dynamic>;
     } catch (e) {
-      throw Exception('Failed to load Firebase configuration: $e');
+      throw Exception(
+        'Failed to load Firebase configuration: $e\n'
+        'Make sure config/firebase_config.json exists and is properly formatted.\n'
+        'Copy firebase_config.template.json to firebase_config.json and fill in your credentials.',
+      );
     }
   }
 
