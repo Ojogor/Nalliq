@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              // TODO: Implement search functionality
+              context.pushNamed('search');
             },
           ),
           IconButton(

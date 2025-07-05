@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../core/models/user_model.dart';
 import '../core/models/food_item_model.dart';
+import 'cleanup_profile_urls.dart';
 
 class DebugDataHelper {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -77,5 +78,12 @@ class DebugDataHelper {
     } catch (e) {
       print('❌ Debug data load error: $e');
     }
+  }
+
+  /// Clean up placeholder profile URLs in the database
+  static Future<void> cleanupProfileUrls() async {
+    print('🧹 === CLEANING UP PROFILE URLS ===');
+    await ProfileUrlCleanup.cleanupAllExampleUrls();
+    print('✅ Profile URL cleanup completed');
   }
 }

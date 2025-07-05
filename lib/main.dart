@@ -14,7 +14,7 @@ import 'features/home/providers/store_provider.dart';
 import 'features/items/providers/item_provider.dart';
 import 'features/cart/providers/cart_provider.dart';
 import 'features/exchange/providers/exchange_provider.dart';
-import 'features/profile/providers/profile_provider.dart';
+import 'features/profile/providers/profile_provider.dart'; 
 import 'features/settings/providers/settings_provider.dart';
 import 'features/trust/providers/trust_score_provider.dart';
 import 'features/navigation/app_router.dart';

@@ -157,4 +157,71 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // Update user profile (display name and photo)
+  Future<bool> updateUserProfile({
+    String? displayName,
+    String? photoUrl,
+  }) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      if (_user == null || _appUser == null) {
+        _error = 'No user logged in';
+        return false;
+      }
+
+      // Update Firebase Auth profile
+      await _user!.updateDisplayName(displayName);
+      if (photoUrl != null) {
+        await _user!.updatePhotoURL(photoUrl);
+      }
+
+      // Update Firestore document
+      final updates = <String, dynamic>{};
+      if (displayName != null) {
+        updates['displayName'] = displayName;
+      }
+      if (photoUrl != null) {
+        updates['photoUrl'] = photoUrl;
+      }
+      updates['lastActive'] = DateTime.now();
+
+      await _firestore.collection('users').doc(_user!.uid).update(updates);
+
+      // Update local AppUser object
+      _appUser = AppUser(
+        id: _appUser!.id,
+        email: _appUser!.email,
+        displayName: displayName ?? _appUser!.displayName,
+        photoUrl: photoUrl ?? _appUser!.photoUrl,
+        phoneNumber: _appUser!.phoneNumber,
+        role: _appUser!.role,
+        trustLevel: _appUser!.trustLevel,
+        trustScore: _appUser!.trustScore,
+        friendIds: _appUser!.friendIds,
+        createdAt: _appUser!.createdAt,
+        lastActive: DateTime.now(),
+        isVerified: _appUser!.isVerified,
+        idVerified: _appUser!.idVerified,
+        idVerificationDate: _appUser!.idVerificationDate,
+        foodSafetyQACompleted: _appUser!.foodSafetyQACompleted,
+        foodSafetyQADate: _appUser!.foodSafetyQADate,
+        lastTrustScoreUpdate: _appUser!.lastTrustScoreUpdate,
+        bio: _appUser!.bio,
+        location: _appUser!.location,
+        stats: _appUser!.stats,
+      );
+
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

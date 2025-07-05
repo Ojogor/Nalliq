@@ -14,6 +14,7 @@ class UserStoreCard extends StatelessWidget {
 
     return Container(
       width: 280,
+      height: 220, // Fixed height to work in horizontal lists
       margin: const EdgeInsets.only(right: 16),
       child: Card(
         elevation: 4,
@@ -135,7 +136,7 @@ class UserStoreCard extends StatelessWidget {
                 ),
               ),
               // Recent items preview
-              Expanded(
+              Flexible(
                 child:
                     store.recentItems.isEmpty
                         ? Center(
@@ -160,8 +161,10 @@ class UserStoreCard extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              Expanded(
+                              Flexible(
                                 child: ListView.separated(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
                                   itemCount: store.recentItems.take(3).length,
                                   separatorBuilder:
                                       (context, index) =>

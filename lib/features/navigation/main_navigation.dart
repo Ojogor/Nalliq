@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
+import '../../core/models/user_model.dart';
 import '../../features/auth/providers/auth_provider.dart';
 
 class MainNavigation extends StatelessWidget {
@@ -12,7 +13,7 @@ class MainNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final isFoodBank = authProvider.appUser?.role == 'foodBank';
+    final isFoodBank = authProvider.appUser?.role == UserRole.foodBank;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(

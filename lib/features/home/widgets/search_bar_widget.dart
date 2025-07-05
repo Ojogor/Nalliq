@@ -25,11 +25,17 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color:
+            Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF2D2D30)
+                : AppColors.white,
         borderRadius: BorderRadius.circular(AppDimensions.radiusL),
         boxShadow: [
           BoxShadow(
-            color: AppColors.grey.withOpacity(0.1),
+            color: (Theme.of(context).brightness == Brightness.dark
+                    ? Colors.black
+                    : AppColors.grey)
+                .withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -38,7 +44,12 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
       child: TextField(
         controller: _controller,
         onChanged: widget.onSearch,
-        style: Theme.of(context).textTheme.bodyMedium,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color:
+              Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white
+                  : Colors.black87,
+        ),
         decoration: InputDecoration(
           hintText: widget.hintText ?? 'Search for food items...',
           hintStyle: Theme.of(

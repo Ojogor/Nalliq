@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
@@ -122,20 +123,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         children: [
           // Avatar
-          CircleAvatar(
-            radius: 40,
-            backgroundColor: AppColors.primaryGreen.withOpacity(0.2),
-            backgroundImage:
-                user?.photoUrl != null ? NetworkImage(user!.photoUrl!) : null,
-            child:
-                user?.photoUrl == null
-                    ? Icon(
-                      Icons.person,
-                      size: 40,
-                      color: AppColors.primaryGreen,
-                    )
-                    : null,
-          ),
+          user?.photoUrl != null &&
+                  user!.photoUrl!.isNotEmpty &&
+                  !user.photoUrl!.contains('example.com')
+              ? CachedNetworkImage(
+                imageUrl: user.photoUrl!,
+                imageBuilder:
+                    (context, imageProvider) => CircleAvatar(
+                      radius: 40,
+                      backgroundImage: imageProvider,
+                    ),
+                placeholder:
+                    (context, url) => CircleAvatar(
+                      radius: 40,
+                      backgroundColor: AppColors.primaryGreen.withOpacity(0.2),
+                      child: const CircularProgressIndicator(),
+                    ),
+                errorWidget:
+                    (context, url, error) => CircleAvatar(
+                      radius: 40,
+                      backgroundColor: AppColors.primaryGreen.withOpacity(0.2),
+                      child: const Icon(
+                        Icons.person,
+                        size: 40,
+                        color: AppColors.primaryGreen,
+                      ),
+                    ),
+              )
+              : CircleAvatar(
+                radius: 40,
+                backgroundColor: AppColors.primaryGreen.withOpacity(0.2),
+                child: const Icon(
+                  Icons.person,
+                  size: 40,
+                  color: AppColors.primaryGreen,
+                ),
+              ),
 
           const SizedBox(height: AppDimensions.marginM),
 

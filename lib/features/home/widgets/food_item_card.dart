@@ -48,14 +48,13 @@ class FoodItemCard extends StatelessWidget {
                 padding: const EdgeInsets.all(AppDimensions.paddingM),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     // Item name and condition
                     _buildHeader(context),
 
                     const SizedBox(height: 4), // Reduced spacing
                     // Description
-                    Flexible(child: _buildDescription(context)),
+                    _buildDescription(context),
 
                     const SizedBox(height: 6), // Reduced spacing
                     // Quantity and expiry
@@ -63,7 +62,7 @@ class FoodItemCard extends StatelessWidget {
 
                     // Add spacing only if there's an add button
                     if (showAddButton && onAddToCart != null) ...[
-                      const SizedBox(height: 8), // Minimal spacing
+                      const Spacer(), // Push button to bottom
                       _buildAddButton(context),
                     ],
                   ],
