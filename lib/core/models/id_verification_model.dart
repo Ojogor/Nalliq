@@ -51,7 +51,10 @@ class IDVerification {
       frontImageUrl: data['frontImageUrl'],
       backImageUrl: data['backImageUrl'],
       idNumber: data['idNumber'],
-      submittedAt: (data['submittedAt'] as Timestamp).toDate(),
+      submittedAt:
+          data['submittedAt'] != null
+              ? (data['submittedAt'] as Timestamp).toDate()
+              : DateTime.now(),
       reviewedAt:
           data['reviewedAt'] != null
               ? (data['reviewedAt'] as Timestamp).toDate()

@@ -149,7 +149,10 @@ class TrustScoreProvider extends ChangeNotifier {
           'scoreChange': data['scoreChange'],
           'newScore': data['newScore'],
           'reason': data['reason'],
-          'timestamp': (data['timestamp'] as Timestamp).toDate(),
+          'timestamp':
+              data['timestamp'] != null
+                  ? (data['timestamp'] as Timestamp).toDate()
+                  : DateTime.now(),
         };
       }).toList();
     } catch (e) {

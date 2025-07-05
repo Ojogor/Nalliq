@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum UserRole { individual, foodBank, communityMember }
+enum UserRole { individual, foodBank, communityMember, moderator }
 
 enum TrustLevel { low, medium, high }
 
@@ -24,7 +24,17 @@ class AppUser {
   final DateTime? lastTrustScoreUpdate;
   final String? bio;
   final Map<String, dynamic>? location;
-  final Map<String, int> stats; // exchanges, donations, etc.
+  final Map<String, int> stats;
+  final bool termsAccepted;
+  final DateTime? termsAcceptedDate;
+  final bool safetyTrainingCompleted;
+  final DateTime? safetyTrainingDate;
+  final bool isBanned;
+  final String? banReason;
+  final DateTime? banDate;
+  final int reportCount;
+  final List<String> reportedByUsers;
+  final DateTime? lastReportDate;
 
   const AppUser({
     required this.id,
@@ -47,6 +57,16 @@ class AppUser {
     this.bio,
     this.location,
     this.stats = const {},
+    this.termsAccepted = false,
+    this.termsAcceptedDate,
+    this.safetyTrainingCompleted = false,
+    this.safetyTrainingDate,
+    this.isBanned = false,
+    this.banReason,
+    this.banDate,
+    this.reportCount = 0,
+    this.reportedByUsers = const [],
+    this.lastReportDate,
   });
 
   factory AppUser.fromFirestore(DocumentSnapshot doc) {
@@ -67,26 +87,29 @@ class AppUser {
       ),
       trustScore: (data['trustScore'] ?? 0.0).toDouble(),
       friendIds: List<String>.from(data['friendIds'] ?? []),
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      lastActive: (data['lastActive'] as Timestamp).toDate(),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      lastActive:
+          (data['lastActive'] as Timestamp?)?.toDate() ?? DateTime.now(),
       isVerified: data['isVerified'] ?? false,
       idVerified: data['idVerified'] ?? false,
-      idVerificationDate:
-          data['idVerificationDate'] != null
-              ? (data['idVerificationDate'] as Timestamp).toDate()
-              : null,
+      idVerificationDate: (data['idVerificationDate'] as Timestamp?)?.toDate(),
       foodSafetyQACompleted: data['foodSafetyQACompleted'] ?? false,
-      foodSafetyQADate:
-          data['foodSafetyQADate'] != null
-              ? (data['foodSafetyQADate'] as Timestamp).toDate()
-              : null,
+      foodSafetyQADate: (data['foodSafetyQADate'] as Timestamp?)?.toDate(),
       lastTrustScoreUpdate:
-          data['lastTrustScoreUpdate'] != null
-              ? (data['lastTrustScoreUpdate'] as Timestamp).toDate()
-              : null,
+          (data['lastTrustScoreUpdate'] as Timestamp?)?.toDate(),
       bio: data['bio'],
       location: data['location'],
       stats: Map<String, int>.from(data['stats'] ?? {}),
+      termsAccepted: data['termsAccepted'] ?? false,
+      termsAcceptedDate: (data['termsAcceptedDate'] as Timestamp?)?.toDate(),
+      safetyTrainingCompleted: data['safetyTrainingCompleted'] ?? false,
+      safetyTrainingDate: (data['safetyTrainingDate'] as Timestamp?)?.toDate(),
+      isBanned: data['isBanned'] ?? false,
+      banReason: data['banReason'],
+      banDate: (data['banDate'] as Timestamp?)?.toDate(),
+      reportCount: data['reportCount'] ?? 0,
+      reportedByUsers: List<String>.from(data['reportedByUsers'] ?? []),
+      lastReportDate: (data['lastReportDate'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -120,6 +143,23 @@ class AppUser {
       'bio': bio,
       'location': location,
       'stats': stats,
+      'termsAccepted': termsAccepted,
+      'termsAcceptedDate':
+          termsAcceptedDate != null
+              ? Timestamp.fromDate(termsAcceptedDate!)
+              : null,
+      'safetyTrainingCompleted': safetyTrainingCompleted,
+      'safetyTrainingDate':
+          safetyTrainingDate != null
+              ? Timestamp.fromDate(safetyTrainingDate!)
+              : null,
+      'isBanned': isBanned,
+      'banReason': banReason,
+      'banDate': banDate != null ? Timestamp.fromDate(banDate!) : null,
+      'reportCount': reportCount,
+      'reportedByUsers': reportedByUsers,
+      'lastReportDate':
+          lastReportDate != null ? Timestamp.fromDate(lastReportDate!) : null,
     };
   }
 
@@ -142,6 +182,16 @@ class AppUser {
     String? bio,
     Map<String, dynamic>? location,
     Map<String, int>? stats,
+    bool? termsAccepted,
+    DateTime? termsAcceptedDate,
+    bool? safetyTrainingCompleted,
+    DateTime? safetyTrainingDate,
+    bool? isBanned,
+    String? banReason,
+    DateTime? banDate,
+    int? reportCount,
+    List<String>? reportedByUsers,
+    DateTime? lastReportDate,
   }) {
     return AppUser(
       id: id,
@@ -165,6 +215,33 @@ class AppUser {
       bio: bio ?? this.bio,
       location: location ?? this.location,
       stats: stats ?? this.stats,
+      termsAccepted: termsAccepted ?? this.termsAccepted,
+      termsAcceptedDate: termsAcceptedDate ?? this.termsAcceptedDate,
+      safetyTrainingCompleted:
+          safetyTrainingCompleted ?? this.safetyTrainingCompleted,
+      safetyTrainingDate: safetyTrainingDate ?? this.safetyTrainingDate,
+      isBanned: isBanned ?? this.isBanned,
+      banReason: banReason ?? this.banReason,
+      banDate: banDate ?? this.banDate,
+      reportCount: reportCount ?? this.reportCount,
+      reportedByUsers: reportedByUsers ?? this.reportedByUsers,
+      lastReportDate: lastReportDate ?? this.lastReportDate,
     );
+  }
+
+  bool get shouldBeBanned {
+    final weeksSinceCreation = DateTime.now().difference(createdAt).inDays / 7;
+    return trustScore <= 0 && weeksSinceCreation >= 1;
+  }
+
+  bool get isModerator => role == UserRole.moderator;
+
+  bool hasBeenReportedBy(String userId) {
+    return reportedByUsers.contains(userId);
+  }
+
+  int get daysWithLowTrustScore {
+    if (lastTrustScoreUpdate == null || trustScore > 0) return 0;
+    return DateTime.now().difference(lastTrustScoreUpdate!).inDays;
   }
 }

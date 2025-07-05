@@ -44,7 +44,10 @@ class TrustScoreEntry {
       ),
       points: (data['points'] ?? 0.0).toDouble(),
       description: data['description'] ?? '',
-      timestamp: (data['timestamp'] as Timestamp).toDate(),
+      timestamp:
+          data['timestamp'] != null
+              ? (data['timestamp'] as Timestamp).toDate()
+              : DateTime.now(),
       relatedId: data['relatedId'],
       metadata: data['metadata'],
     );

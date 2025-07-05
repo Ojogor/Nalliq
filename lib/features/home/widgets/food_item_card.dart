@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/models/food_item_model.dart';
+import '../../../core/models/user_location.dart';
+import '../../../core/services/firebase_location_service.dart';
+import '../../location/providers/new_location_provider.dart';
 
 class FoodItemCard extends StatelessWidget {
   final FoodItem item;
@@ -48,21 +52,28 @@ class FoodItemCard extends StatelessWidget {
                 padding: const EdgeInsets.all(AppDimensions.paddingM),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     // Item name and condition
                     _buildHeader(context),
 
-                    const SizedBox(height: 4), // Reduced spacing
-                    // Description
-                    _buildDescription(context),
+                    const SizedBox(height: 2), // Reduced spacing
+                    // Description - flexible
+                    Flexible(child: _buildDescription(context)),
 
-                    const SizedBox(height: 6), // Reduced spacing
+                    const SizedBox(height: 2), // Reduced spacing
                     // Quantity and expiry
                     _buildDetails(context),
 
+                    // Distance information if available - only show if space allows
+                    if (MediaQuery.of(context).size.height > 600)
+                      _buildDistanceInfo(context),
+
                     // Add spacing only if there's an add button
                     if (showAddButton && onAddToCart != null) ...[
-                      const Spacer(), // Push button to bottom
+                      const SizedBox(
+                        height: 6,
+                      ), // Fixed spacing instead of Spacer
                       _buildAddButton(context),
                     ],
                   ],
@@ -175,17 +186,16 @@ class FoodItemCard extends StatelessWidget {
             item.name,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
+              fontSize: 12, // Slightly smaller
               color: isDark ? Colors.white : AppColors.textPrimary,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
         ),
+        const SizedBox(width: 4),
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.paddingXS,
-            vertical: 2,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
             color: _getConditionColor().withOpacity(0.2),
             borderRadius: BorderRadius.circular(AppDimensions.radiusS),
@@ -193,7 +203,7 @@ class FoodItemCard extends StatelessWidget {
           child: Text(
             item.conditionDisplayName,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 9,
               fontWeight: FontWeight.w500,
               color: _getConditionColor(),
             ),
@@ -210,9 +220,10 @@ class FoodItemCard extends StatelessWidget {
       item.description,
       style: Theme.of(context).textTheme.bodySmall?.copyWith(
         color: isDark ? Colors.white70 : AppColors.textSecondary,
-        fontSize: 11, // Slightly smaller font
+        fontSize: 10, // Smaller font
+        height: 1.2, // Reduced line height
       ),
-      maxLines: 2,
+      maxLines: 1, // Reduced from 2 to 1 line
       overflow: TextOverflow.ellipsis,
     );
   }
@@ -228,32 +239,34 @@ class FoodItemCard extends StatelessWidget {
           color: isDark ? Colors.white54 : AppColors.grey,
         ),
         const SizedBox(width: 3),
-        Flexible(
+        Expanded(
+          flex: 3,
           child: Text(
             '${item.quantity} ${item.unit}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: isDark ? Colors.white70 : AppColors.textSecondary,
               fontWeight: FontWeight.w500,
-              fontSize: 10,
+              fontSize: 9,
             ),
             overflow: TextOverflow.ellipsis,
           ),
         ),
         if (item.expiryDate != null) ...[
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Icon(
             Icons.calendar_today,
             size: 12,
             color: isDark ? Colors.white54 : AppColors.grey,
           ),
           const SizedBox(width: 3),
-          Flexible(
+          Expanded(
+            flex: 2,
             child: Text(
               _formatDate(item.expiryDate!),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: isDark ? Colors.white70 : AppColors.textSecondary,
                 fontWeight: FontWeight.w500,
-                fontSize: 10,
+                fontSize: 9,
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -263,16 +276,69 @@ class FoodItemCard extends StatelessWidget {
     );
   }
 
+  Widget _buildDistanceInfo(BuildContext context) {
+    return Consumer<LocationProvider>(
+      builder: (context, locationProvider, child) {
+        if (locationProvider.currentLocation == null || item.location == null) {
+          return const SizedBox.shrink();
+        }
+
+        try {
+          final distance = FirebaseLocationService.calculateDistance(
+            locationProvider.currentLocation!,
+            UserLocation(
+              latitude: (item.location!['latitude'] as num?)?.toDouble() ?? 0,
+              longitude: (item.location!['longitude'] as num?)?.toDouble() ?? 0,
+              address: item.location!['address'] as String? ?? '',
+              city: item.location!['city'] as String? ?? '',
+              province: item.location!['province'] as String? ?? '',
+              country: item.location!['country'] as String? ?? '',
+              isVisible: true,
+              lastUpdated: DateTime.now(),
+            ),
+          );
+
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.info.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.location_on, size: 10, color: AppColors.info),
+                const SizedBox(width: 2),
+                Text(
+                  '${distance.toStringAsFixed(1)}km',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.info,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          );
+        } catch (e) {
+          return const SizedBox.shrink();
+        }
+      },
+    );
+  }
+
   Widget _buildAddButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 28, // Reduced height
+      height: 24, // Further reduced height
       child: ElevatedButton(
         onPressed: onAddToCart,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryGreen,
           foregroundColor: AppColors.white,
           padding: EdgeInsets.zero,
+          minimumSize: const Size(0, 24),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusS),
           ),
@@ -280,9 +346,9 @@ class FoodItemCard extends StatelessWidget {
         child: const Text(
           'Add to Cart',
           style: TextStyle(
-            fontSize: 11,
+            fontSize: 10, // Smaller font
             fontWeight: FontWeight.w600,
-          ), // Smaller font
+          ),
         ),
       ),
     );

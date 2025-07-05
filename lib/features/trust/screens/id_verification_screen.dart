@@ -293,31 +293,96 @@ class _IDVerificationScreenState extends State<IDVerificationScreen> {
   ) {
     final canSubmit = _frontImage != null && !_isSubmitting;
 
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed:
-            canSubmit
-                ? () => _submitVerification(trustProvider, authProvider)
-                : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryGreen,
-          foregroundColor: AppColors.white,
-          padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingM),
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed:
+                canSubmit
+                    ? () => _submitVerification(trustProvider, authProvider)
+                    : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+              foregroundColor: AppColors.white,
+              padding: const EdgeInsets.symmetric(
+                vertical: AppDimensions.paddingM,
+              ),
+            ),
+            child:
+                _isSubmitting
+                    ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                    : const Text('Submit for Verification'),
+          ),
         ),
-        child:
-            _isSubmitting
-                ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
-                )
-                : const Text('Submit for Verification'),
-      ),
+        const SizedBox(height: AppDimensions.marginM),
+        // Test button for development - mark as verified immediately
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed:
+                _isSubmitting ? null : () => _markAsVerified(authProvider),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primaryGreen,
+              side: const BorderSide(color: AppColors.primaryGreen),
+              padding: const EdgeInsets.symmetric(
+                vertical: AppDimensions.paddingM,
+              ),
+            ),
+            child: const Text('Mark as Verified (Test)'),
+          ),
+        ),
+      ],
     );
+  }
+
+  Future<void> _markAsVerified(AuthProvider authProvider) async {
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final success = await authProvider.updateIdVerificationStatus(true);
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('ID verification marked as completed!'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+
+        // Navigate to next step or home
+        final nextStep =
+            authProvider.appUser?.foodSafetyQACompleted == false
+                ? '/certifications'
+                : '/home';
+
+        context.go(nextStep);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              authProvider.error ?? 'Failed to update verification status',
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 
   Future<void> _pickImage(bool isFront) async {

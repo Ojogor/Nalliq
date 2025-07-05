@@ -72,7 +72,10 @@ class ExchangeRequest {
         orElse: () => RequestStatus.pending,
       ),
       message: data['message'],
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt:
+          data['createdAt'] != null
+              ? (data['createdAt'] as Timestamp).toDate()
+              : DateTime.now(),
       respondedAt:
           data['respondedAt'] != null
               ? (data['respondedAt'] as Timestamp).toDate()

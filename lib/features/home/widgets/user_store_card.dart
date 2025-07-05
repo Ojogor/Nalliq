@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/location_service.dart';
 import '../providers/home_provider.dart';
-import '../../../core/models/user_model.dart';
 
 class UserStoreCard extends StatelessWidget {
   final UserStore store;
@@ -64,38 +64,13 @@ class UserStoreCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  store.user.displayName,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (store.user.role == UserRole.foodBank)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primaryOrange,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Text(
-                                    'Food Bank',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                            ],
+                          Text(
+                            store.user.displayName,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
                           Row(
@@ -129,6 +104,30 @@ class UserStoreCard extends StatelessWidget {
                               ),
                             ],
                           ),
+                          if (store.distanceKm != null) ...[
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.location_on_outlined,
+                                  size: 16,
+                                  color: isDark ? Colors.white54 : Colors.grey,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  LocationService.getDistanceText(
+                                    store.distanceKm!,
+                                  ),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color:
+                                        isDark ? Colors.white70 : Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),

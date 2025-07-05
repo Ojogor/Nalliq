@@ -14,9 +14,12 @@ import 'features/home/providers/store_provider.dart';
 import 'features/items/providers/item_provider.dart';
 import 'features/cart/providers/cart_provider.dart';
 import 'features/exchange/providers/exchange_provider.dart';
-import 'features/profile/providers/profile_provider.dart'; 
+import 'features/profile/providers/profile_provider.dart';
 import 'features/settings/providers/settings_provider.dart';
 import 'features/trust/providers/trust_score_provider.dart';
+import 'features/location/providers/new_location_provider.dart'
+    as location_provider;
+import 'features/location/services/location_notification_service.dart';
 import 'features/navigation/app_router.dart';
 
 void main() async {
@@ -29,6 +32,9 @@ void main() async {
 
   // Initialize Hive
   await Hive.initFlutter();
+
+  // Initialize location notification service
+  await LocationNotificationService.initialize();
 
   // Configure Open Food Facts API user agent globally
   try {
@@ -55,7 +61,6 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => HomeProvider()),
         ChangeNotifierProvider(create: (_) => StoreProvider()),
         ChangeNotifierProvider(create: (_) => ItemProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()..initialize()),
@@ -65,9 +70,23 @@ class MyApp extends StatelessWidget {
           create: (_) => SettingsProvider()..loadSettings(),
         ),
         ChangeNotifierProvider(create: (_) => TrustScoreProvider()),
+        ChangeNotifierProvider(
+          create:
+              (_) => location_provider.LocationProvider()..initializeLocation(),
+        ),
+        ChangeNotifierProxyProvider<
+          location_provider.LocationProvider,
+          HomeProvider
+        >(
+          create: (_) => HomeProvider(),
+          update:
+              (_, location, home) => home!..updateLocationProvider(location),
+        ),
       ],
-      child: Consumer<SettingsProvider>(
-        builder: (context, settingsProvider, child) {
+      child: Consumer2<SettingsProvider, AuthProvider>(
+        builder: (context, settingsProvider, authProvider, child) {
+          // Set the auth provider in the router
+          AppRouter.setAuthProvider(authProvider);
           // Apply accessibility settings to our custom themes
           final safeFontSizeFactor =
               (settingsProvider.textScaleFactor > 0.0 &&
@@ -86,63 +105,58 @@ class MyApp extends StatelessWidget {
               // Override custom colors for high contrast
               scaffoldBackgroundColor: Colors.white,
               cardColor: Colors.white,
+              appBarTheme: AppTheme.lightTheme.appBarTheme.copyWith(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+              ),
               textTheme: AppTheme.lightTheme.textTheme.apply(
-                fontSizeFactor: safeFontSizeFactor,
-                bodyColor: Colors.black,
                 displayColor: Colors.black,
+                bodyColor: Colors.black,
               ),
             );
-
             // High contrast dark theme
             darkTheme = AppTheme.darkTheme.copyWith(
               colorScheme: const ColorScheme.highContrastDark(),
               // Override custom colors for high contrast
               scaffoldBackgroundColor: Colors.black,
-              cardColor: const Color(0xFF121212),
+              cardColor: Colors.black,
+              appBarTheme: AppTheme.darkTheme.appBarTheme.copyWith(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+              ),
               textTheme: AppTheme.darkTheme.textTheme.apply(
-                fontSizeFactor: safeFontSizeFactor,
-                bodyColor: Colors.white,
                 displayColor: Colors.white,
+                bodyColor: Colors.white,
               ),
             );
           } else {
-            // Normal themes with font scaling
-            lightTheme = AppTheme.lightTheme.copyWith(
-              textTheme:
-                  safeFontSizeFactor != 1.0
-                      ? AppTheme.lightTheme.textTheme.apply(
-                        fontSizeFactor: safeFontSizeFactor,
-                      )
-                      : AppTheme.lightTheme.textTheme,
-            );
-
-            darkTheme = AppTheme.darkTheme.copyWith(
-              textTheme:
-                  safeFontSizeFactor != 1.0
-                      ? AppTheme.darkTheme.textTheme.apply(
-                        fontSizeFactor: safeFontSizeFactor,
-                      )
-                      : AppTheme.darkTheme.textTheme,
-            );
+            lightTheme = AppTheme.lightTheme;
+            darkTheme = AppTheme.darkTheme;
           }
 
           return MaterialApp.router(
             title: AppStrings.appName,
-            theme: lightTheme,
-            darkTheme: darkTheme,
+            theme: lightTheme.copyWith(
+              textTheme: lightTheme.textTheme.apply(
+                fontSizeFactor: safeFontSizeFactor,
+              ),
+            ),
+            darkTheme: darkTheme.copyWith(
+              textTheme: darkTheme.textTheme.apply(
+                fontSizeFactor: safeFontSizeFactor,
+              ),
+            ),
             themeMode:
-                settingsProvider.darkModeEnabled
-                    ? ThemeMode.dark
-                    : ThemeMode.light,
-            locale: settingsProvider.selectedLocale,
-            supportedLocales: const [Locale('en', ''), Locale('fr', '')],
+                settingsProvider.darkTheme ? ThemeMode.dark : ThemeMode.light,
+            routerConfig: AppRouter.router,
             localizationsDelegates: const [
               AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
-            routerConfig: AppRouter.router,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: settingsProvider.locale,
             debugShowCheckedModeBanner: false,
           );
         },

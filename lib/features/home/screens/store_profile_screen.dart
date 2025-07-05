@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/models/user_model.dart';
+import '../../../core/widgets/report_user_dialog.dart';
+import '../../../core/utils/distance_calculator.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/store_provider.dart';
 import '../widgets/food_item_card.dart';
@@ -84,13 +85,9 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
     final store = storeProvider.storeUser!;
     final items = storeProvider.storeItems;
     final isFriend = storeProvider.isFriend;
-    final isFriendRequested = storeProvider.isFriendRequested;
-    final isRequesting = storeProvider.isRequesting;
+    final friendRequestSent = storeProvider.friendRequestSent;
+    final hasPendingRequest = storeProvider.hasPendingRequestFromStore;
     final isOwnStore = store.id == currentUserId;
-    Icon icon1 = Icon(Icons.person_add);
-    if (isFriend || isFriendRequested) {
-      icon1 = Icon(Icons.person_remove);
-    }
 
     return CustomScrollView(
       slivers: [
@@ -98,6 +95,22 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
         SliverAppBar(
           expandedHeight: 200,
           pinned: true,
+          actions: [
+            // Only show report button if not own store
+            if (!isOwnStore)
+              Consumer<AuthProvider>(
+                builder: (context, authProvider, child) {
+                  final currentUser = authProvider.appUser;
+                  if (currentUser == null) return const SizedBox.shrink();
+
+                  return IconButton(
+                    onPressed: () => _showReportDialog(currentUser, store),
+                    icon: const Icon(Icons.report, color: Colors.white),
+                    tooltip: 'Report Store',
+                  );
+                },
+              ),
+          ],
           flexibleSpace: FlexibleSpaceBar(
             background: Container(
               decoration: BoxDecoration(
@@ -201,6 +214,51 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                                     ),
                                   ],
                                 ),
+                                // Location and distance info
+                                Consumer<AuthProvider>(
+                                  builder: (context, authProvider, child) {
+                                    final currentUser = authProvider.appUser;
+                                    final distance =
+                                        currentUser?.location != null &&
+                                                store.location != null
+                                            ? DistanceCalculator.calculateDistanceToUser(
+                                              currentUser!.location,
+                                              store.location,
+                                            )
+                                            : null;
+
+                                    if (store.location != null) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(top: 4),
+                                        child: Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.location_on,
+                                              color: Colors.white70,
+                                              size: 16,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Expanded(
+                                              child: Text(
+                                                distance != null
+                                                    ? '${store.location!['address'] ?? 'Location set'} • ${DistanceCalculator.formatDistance(distance)} away'
+                                                    : store.location!['address'] ??
+                                                        'Location set',
+                                                style: const TextStyle(
+                                                  color: Colors.white70,
+                                                  fontSize: 14,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }
+                                    return const SizedBox.shrink();
+                                  },
+                                ),
                                 if (store.bio?.isNotEmpty == true)
                                   Padding(
                                     padding: const EdgeInsets.only(top: 4),
@@ -231,84 +289,12 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  if (!isRequesting)
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed:
-                            () => _toggleFriend(storeProvider, currentUserId),
-                        icon: Icon(
-                          isFriend ? Icons.person_remove : Icons.person_add,
-                        ),
-                        label: Text(
-                          isFriend
-                              ? 'Remove Friend'
-                              : isFriendRequested
-                              ? 'Cancel request'
-                              : 'Add Friend',
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              isFriend
-                                  ? AppColors.error
-                                  : isFriendRequested
-                                  ? AppColors.grey
-                                  : AppColors.primaryGreen,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                  if (isRequesting) ...[
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed:
-                            () => _toggleFriend1(
-                              storeProvider,
-                              currentUserId,
-                              "Confirm",
-                            ),
-
-                        label: Text("Confirm"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryGreen,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed:
-                            () => _toggleFriend1(
-                              storeProvider,
-                              currentUserId,
-                              "Delete",
-                            ),
-                        label: Text("Delete"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.lightGrey,
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _messageStore(store),
-                      icon: const Icon(Icons.message),
-                      label: const Text('Message'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryOrange,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                ],
+              child: _buildFriendshipButtons(
+                storeProvider,
+                currentUserId,
+                isFriend,
+                friendRequestSent,
+                hasPendingRequest,
               ),
             ),
           ),
@@ -403,6 +389,99 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
     );
   }
 
+  Widget _buildFriendshipButtons(
+    StoreProvider storeProvider,
+    String currentUserId,
+    bool isFriend,
+    bool friendRequestSent,
+    bool hasPendingRequest,
+  ) {
+    if (hasPendingRequest) {
+      return Row(
+        children: [
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () {
+                storeProvider.acceptFriendRequest(
+                  storeProvider.pendingRequestId!,
+                  widget.storeUserId,
+                  currentUserId,
+                );
+              },
+              icon: const Icon(Icons.check),
+              label: const Text('Accept Request'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () {
+                storeProvider.cancelFriendRequest(
+                  storeProvider.pendingRequestId!,
+                );
+              },
+              icon: const Icon(Icons.close),
+              label: const Text('Decline'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.error,
+                side: const BorderSide(color: AppColors.error),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (isFriend) {
+      return ElevatedButton.icon(
+        onPressed:
+            () => storeProvider.removeFriend(widget.storeUserId, currentUserId),
+        icon: const Icon(Icons.person_remove),
+        label: const Text('Remove Friend'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.error,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+      );
+    }
+
+    if (friendRequestSent) {
+      return ElevatedButton.icon(
+        onPressed:
+            () => storeProvider.cancelFriendRequest(
+              storeProvider.pendingRequestId!,
+            ),
+        icon: const Icon(Icons.cancel_schedule_send),
+        label: const Text('Cancel Request'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.grey,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+      );
+    }
+
+    return ElevatedButton.icon(
+      onPressed:
+          () => storeProvider.sendFriendRequest(
+            widget.storeUserId,
+            currentUserId,
+          ),
+      icon: const Icon(Icons.person_add),
+      label: const Text('Add Friend'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primaryGreen,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+      ),
+    );
+  }
+
   Widget _buildStatCard(String title, String value, IconData icon) {
     return Card(
       child: Padding(
@@ -444,25 +523,14 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
     }
   }
 
-  void _toggleFriend(StoreProvider storeProvider, String currentUserId) {
-    storeProvider.toggleFriend(widget.storeUserId, currentUserId);
-  }
-
-  void _toggleFriend1(
-    StoreProvider storeProvider,
-    String currentUserId,
-    String action,
-  ) {
-    storeProvider.toggleFriend1(widget.storeUserId, currentUserId, action);
-  }
-
-  void _messageStore(AppUser store) {
-    // TODO: Implement messaging functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Messaging with ${store.displayName} - Coming soon!'),
-        backgroundColor: AppColors.primaryOrange,
-      ),
+  void _showReportDialog(AppUser currentUser, AppUser storeUser) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => ReportUserDialog(
+            reportedUser: storeUser,
+            currentUser: currentUser,
+          ),
     );
   }
 }

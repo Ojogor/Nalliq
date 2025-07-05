@@ -6,9 +6,11 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../debug/test_data_helper.dart';
 import '../../debug/debug_data_helper.dart';
+import '../../debug/add_sample_users.dart';
 import '../../features/auth/providers/auth_provider.dart' as AppAuth;
 import '../../features/home/providers/home_provider.dart';
 import '../../features/items/providers/item_provider.dart';
+import '../../features/location/providers/new_location_provider.dart';
 
 class DebugScreen extends StatefulWidget {
   const DebugScreen({super.key});
@@ -249,6 +251,95 @@ class _DebugScreenState extends State<DebugScreen> {
     });
   }
 
+  Future<void> _addSampleUsers() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    _addToOutput('🧪 Adding sample users for map testing...\n');
+    try {
+      await SampleUserHelper.addSampleUsers();
+      _addToOutput('✅ Sample users added successfully!');
+      _addToOutput('📍 Check the map to see multiple users now');
+    } catch (e) {
+      _addToOutput('❌ Error adding sample users: $e');
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _removeSampleUsers() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    _addToOutput('🧹 Removing sample users...\n');
+    try {
+      await SampleUserHelper.removeSampleUsers();
+      _addToOutput('✅ Sample users removed successfully!');
+    } catch (e) {
+      _addToOutput('❌ Error removing sample users: $e');
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _testNearbyUsersStream() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    _addToOutput('🧪 Testing nearby users stream...\n');
+    try {
+      // Get the LocationProvider to test the stream
+      final locationProvider = Provider.of<LocationProvider>(
+        context,
+        listen: false,
+      );
+      final stream = locationProvider.nearbyUsersStream;
+
+      _addToOutput('📡 Listening to stream for 5 seconds...');
+
+      // Listen to the stream for a few seconds
+      final subscription = stream.listen(
+        (users) {
+          _addToOutput('📦 Stream data received: ${users.length} users');
+          for (final user in users) {
+            _addToOutput('  👤 ${user.name} (${user.id})');
+            _addToOutput('    📍 Location: ${user.location.address}');
+            _addToOutput(
+              '    🌐 Coordinates: ${user.location.latitude}, ${user.location.longitude}',
+            );
+            _addToOutput('    👁️ Visible: ${user.location.isVisible}');
+          }
+        },
+        onError: (error) {
+          _addToOutput('❌ Stream error: $error');
+        },
+      );
+
+      // Cancel after 5 seconds
+      Future.delayed(const Duration(seconds: 5), () {
+        subscription.cancel();
+        _addToOutput('⏹️ Stream test completed');
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      });
+    } catch (e) {
+      _addToOutput('❌ Error testing stream: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -296,6 +387,22 @@ class _DebugScreenState extends State<DebugScreen> {
                   child: const Text('Fix User Data'),
                 ),
                 ElevatedButton(
+                  onPressed: _isLoading ? null : _addSampleUsers,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Add Sample Users'),
+                ),
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _removeSampleUsers,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Remove Sample Users'),
+                ),
+                ElevatedButton(
                   onPressed: _isLoading ? null : _fixCurrentUserData,
                   child: const Text('Fix Current User Data'),
                 ),
@@ -305,6 +412,25 @@ class _DebugScreenState extends State<DebugScreen> {
                     backgroundColor: AppColors.error,
                   ),
                   child: const Text('Clear Output'),
+                ),
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _addSampleUsers,
+                  child: const Text('Add Sample Users'),
+                ),
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _removeSampleUsers,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                  ),
+                  child: const Text('Remove Sample Users'),
+                ),
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _testNearbyUsersStream,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Test Users Stream'),
                 ),
               ],
             ),

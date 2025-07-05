@@ -15,7 +15,7 @@ class BarcodeScannerWidget extends StatefulWidget {
 }
 
 class _BarcodeScannerWidgetState extends State<BarcodeScannerWidget> {
-  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
+  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR_Widget');
   QRViewController? controller;
   bool _isScanning = true;
   bool _flashOn = false;

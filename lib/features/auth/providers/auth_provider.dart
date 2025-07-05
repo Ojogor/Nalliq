@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/models/user_model.dart';
+import '../../../core/models/user_location.dart';
 
 class AuthProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -106,6 +107,7 @@ class AuthProvider extends ChangeNotifier {
           role: role,
           createdAt: DateTime.now(),
           lastActive: DateTime.now(),
+          location: UserLocation.defaultLocation.toJson(),
         );
 
         await _firestore
@@ -215,6 +217,140 @@ class AuthProvider extends ChangeNotifier {
         stats: _appUser!.stats,
       );
 
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> updateProfile({String? displayName, String? photoUrl}) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      if (_user == null || _appUser == null) return false;
+
+      await _firestore.collection('users').doc(_user!.uid).update({
+        'displayName': displayName ?? _appUser!.displayName,
+        'photoUrl': photoUrl ?? _appUser!.photoUrl,
+        'lastActive': DateTime.now(),
+      });
+
+      // Update local user data
+      _appUser = _appUser!.copyWith(
+        displayName: displayName,
+        photoUrl: photoUrl,
+        lastActive: DateTime.now(),
+      );
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Update user's terms acceptance status
+  Future<bool> acceptTermsAndConditions() async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      if (_user == null || _appUser == null) return false;
+
+      final now = DateTime.now();
+      await _firestore.collection('users').doc(_user!.uid).update({
+        'termsAccepted': true,
+        'termsAcceptedDate': now,
+        'lastActive': now,
+      });
+
+      // Update local user data
+      _appUser = _appUser!.copyWith(
+        termsAccepted: true,
+        termsAcceptedDate: now,
+        lastActive: now,
+      );
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Update user's ID verification status
+  Future<bool> updateIdVerificationStatus(bool isVerified) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      if (_user == null || _appUser == null) return false;
+
+      final now = DateTime.now();
+      await _firestore.collection('users').doc(_user!.uid).update({
+        'idVerified': isVerified,
+        'idVerificationDate': isVerified ? now : null,
+        'lastActive': now,
+      });
+
+      // Update local user data
+      _appUser = _appUser!.copyWith(
+        idVerified: isVerified,
+        idVerificationDate: isVerified ? now : null,
+        lastActive: now,
+      );
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Update user's food safety certification status
+  Future<bool> updateFoodSafetyStatus(bool isCompleted) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      if (_user == null || _appUser == null) return false;
+
+      final now = DateTime.now();
+      await _firestore.collection('users').doc(_user!.uid).update({
+        'foodSafetyQACompleted': isCompleted,
+        'foodSafetyQADate': isCompleted ? now : null,
+        'lastActive': now,
+      });
+
+      // Update local user data
+      _appUser = _appUser!.copyWith(
+        foodSafetyQACompleted: isCompleted,
+        foodSafetyQADate: isCompleted ? now : null,
+        lastActive: now,
+      );
+
+      notifyListeners();
       return true;
     } catch (e) {
       _error = e.toString();

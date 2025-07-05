@@ -5,10 +5,17 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     
+    <!-- Location permissions for Google Maps -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    
+    <!-- Internet permission for maps -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    
     <application
         android:label="nalliq"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_launcher" 
         android:enableOnBackInvokedCallback="true">
         <activity
             android:name=".MainActivity"
@@ -43,6 +50,11 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+            
+        <!-- Google Maps API Key -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyCIuHI13zuh2xEK_xH0mr4vx8CtI2OVgMk" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../core/constants/app_colors.dart';
@@ -73,9 +74,88 @@ class _CertificationsScreenState extends State<CertificationsScreen> {
           // Available Certifications
           _buildSectionHeader('Available Certifications'),
           _buildAvailableCertifications(trustProvider, authProvider),
+
+          const SizedBox(height: AppDimensions.marginL),
+
+          // Test button for development
+          _buildTestButton(authProvider),
         ],
       ),
     );
+  }
+
+  Widget _buildTestButton(AuthProvider authProvider) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimensions.paddingM),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Development Testing',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryGreen,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.marginS),
+            const Text(
+              'For testing purposes, you can mark food safety training as completed without uploading certificates.',
+            ),
+            const SizedBox(height: AppDimensions.marginM),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => _markFoodSafetyCompleted(authProvider),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primaryGreen,
+                  side: const BorderSide(color: AppColors.primaryGreen),
+                ),
+                child: const Text(
+                  'Mark Food Safety Training as Completed (Test)',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _markFoodSafetyCompleted(AuthProvider authProvider) async {
+    try {
+      final success = await authProvider.updateFoodSafetyStatus(true);
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Food safety training marked as completed!'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+
+        // Navigate to home since this is the last step
+        context.go('/home');
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              authProvider.error ?? 'Failed to update food safety status',
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildInfoCard() {

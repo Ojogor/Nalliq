@@ -110,7 +110,7 @@ class _MyListingsScreenState extends State<MyListingsScreen>
           ),
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () => context.pushNamed('enhanced-add-item'),
+            onPressed: () => context.push('/add-item-enhanced'),
           ),
         ],
         bottom: TabBar(
@@ -210,7 +210,7 @@ class _MyListingsScreenState extends State<MyListingsScreen>
             ),
             const SizedBox(height: AppDimensions.marginL),
             ElevatedButton.icon(
-              onPressed: () => context.pushNamed('enhanced-add-item'),
+              onPressed: () => context.push('/add-item-enhanced'),
               icon: const Icon(Icons.add),
               label: const Text('Add Your First Item'),
               style: ElevatedButton.styleFrom(
@@ -272,7 +272,7 @@ class _MyListingsScreenState extends State<MyListingsScreen>
           ),
           const SizedBox(height: AppDimensions.marginL),
           ElevatedButton.icon(
-            onPressed: () => context.pushNamed('enhanced-add-item'),
+            onPressed: () => context.push('/add-item-enhanced'),
             icon: const Icon(Icons.edit),
             label: const Text('Create New Listing'),
             style: ElevatedButton.styleFrom(
