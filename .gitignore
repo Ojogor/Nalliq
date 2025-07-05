@@ -48,6 +48,9 @@ app.*.map.json
 config/firebase_config.json
 Nalliq/nalliq/lib/firebase_options.dart 
 assets/secrets.json
+android/app/google-services.json
+# Template files are safe to commit (no actual keys)
+# android/app/google-services.template.json - this can be committed
 # Environment files
 .env
 .env.local
@@ -55,4 +58,4 @@ assets/secrets.json
 
 # API Keys and configuration
 config/api_keys.json
-android/app/src/main/res/values/strings.xml
+android/app/src/main/res/values/strings.xml 
