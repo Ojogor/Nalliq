@@ -6,7 +6,8 @@ import 'package:provider/provider.dart';
 import 'package:openfoodfacts/openfoodfacts.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_strings.dart';
-import 'core/config/secure_firebase_options.dart';
+import 'firebase_options.dart';
+import 'secrets_service.dart';
 import 'core/localization/app_localizations.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/home/providers/home_provider.dart';
@@ -25,32 +26,56 @@ import 'features/navigation/app_router.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase with secure configuration
-  await Firebase.initializeApp(
-    options: await SecureFirebaseOptions.currentPlatform,
-  );
-
-  // Initialize Hive
-  await Hive.initFlutter();
-
-  // Initialize location notification service
-  await LocationNotificationService.initialize();
-
-  // Configure Open Food Facts API user agent globally
   try {
-    OpenFoodAPIConfiguration.userAgent = UserAgent(
-      name: 'Nalliq',
-      version: '1.0.0',
-      system: 'Flutter',
-      url: 'https://github.com/nalliq/nalliq-app',
-      comment: 'Community Food Barter App',
-    );
-    print('Open Food Facts user agent configured globally');
-  } catch (e) {
-    print('Error configuring Open Food Facts user agent: $e');
-  }
+    print('Loading secrets...');
+    final secrets = await SecretService.load();
+    print('Secrets loaded successfully');
 
-  runApp(const MyApp());
+    // Initialize Firebase with secure configuration
+    print('Initializing Firebase...');
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform(secrets),
+      );
+      print('Firebase initialized successfully');
+    } else {
+      print('Firebase already initialized');
+    }
+
+    // Initialize Hive
+    print('Initializing Hive...');
+    await Hive.initFlutter();
+    print('Hive initialized successfully');
+
+    // Initialize location notification service
+    print('Initializing location notification service...');
+    await LocationNotificationService.initialize();
+    print('Location notification service initialized successfully');
+
+    // Configure Open Food Facts API user agent globally
+    try {
+      OpenFoodAPIConfiguration.userAgent = UserAgent(
+        name: 'Nalliq',
+        version: '1.0.0',
+        system: 'Flutter',
+        url: 'https://github.com/nalliq/nalliq-app',
+        comment: 'Community Food Barter App',
+      );
+      print('Open Food Facts user agent configured globally');
+    } catch (e) {
+      print('Error configuring Open Food Facts user agent: $e');
+    }
+
+    runApp(const MyApp());
+  } catch (e) {
+    print('Error during app initialization: $e');
+    // You might want to show an error dialog or fallback UI here
+    runApp(
+      MaterialApp(
+        home: Scaffold(body: Center(child: Text('Error initializing app: $e'))),
+      ),
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {

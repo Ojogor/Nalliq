@@ -47,7 +47,12 @@ app.*.map.json
 # Firebase configuration (keep credentials out of version control)
 config/firebase_config.json
 Nalliq/nalliq/lib/firebase_options.dart 
+assets/secrets.json
 # Environment files
 .env
 .env.local
-.env.*.local
+.env.production
+
+# API Keys and configuration
+config/api_keys.json
+android/app/src/main/res/values/strings.xml
