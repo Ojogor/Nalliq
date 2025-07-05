@@ -19,7 +19,8 @@ class _OutgoingRequestsScreenState extends State<OutgoingRequestsScreen> {
   bool _isLoading = true;
   List<ExchangeRequest> _outgoingRequests = [];
   String? _error;
-  Map<String, String> _userDisplayNames = {}; // Cache for user display names
+  final Map<String, String> _userDisplayNames =
+      {}; // Cache for user display names
 
   @override
   void initState() {

@@ -18,7 +18,6 @@ class SettingsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(localizations.settings),
         elevation: 0,
         backgroundColor: isDark ? Colors.grey[850] : AppColors.white,
         foregroundColor: isDark ? AppColors.white : AppColors.black,
@@ -28,9 +27,11 @@ class SettingsScreen extends StatelessWidget {
           // Top banner with "Settings" title
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              vertical: 20.0,
-              horizontal: 16.0,
+            padding: const EdgeInsets.only(
+              top: 0,
+              bottom: 20.0,
+              left: 16.0,
+              right: 16.0,
             ),
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -127,7 +128,7 @@ class SettingsScreen extends StatelessWidget {
                   icon: Icons.help_outline,
                   title: localizations.helpAndSupport,
                   onTap: () {
-                    // TODO: Implement help screen
+                    context.pushNamed('help-support');
                   },
                 ),
                 _buildSettingsTile(
@@ -135,7 +136,7 @@ class SettingsScreen extends StatelessWidget {
                   icon: Icons.info_outline,
                   title: localizations.aboutNalliq,
                   onTap: () {
-                    // TODO: Implement about screen
+                    context.pushNamed('about-nalliq');
                   },
                 ),
                 _buildSettingsTile(

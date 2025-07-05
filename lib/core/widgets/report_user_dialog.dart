@@ -9,11 +9,11 @@ class ReportUserDialog extends StatefulWidget {
   final String? relatedItemId;
 
   const ReportUserDialog({
-    Key? key,
+    super.key,
     required this.reportedUser,
     required this.currentUser,
     this.relatedItemId,
-  }) : super(key: key);
+  });
 
   @override
   State<ReportUserDialog> createState() => _ReportUserDialogState();

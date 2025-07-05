@@ -39,10 +39,11 @@ class _EnhancedChangeLocationScreenState
     try {
       final secret = await SecretService.load();
       setState(() {
-        _googleApiKey = secret.webApiKey; // Using web API key for Places API
+        _googleApiKey = secret.googleMapApiKey; // Using Google Maps API key for Places API
       });
+      print('✅ Google API key loaded: ${_googleApiKey?.substring(0, 10)}...');
     } catch (e) {
-      print('Error loading secrets: $e');
+      print('❌ Error loading secrets: $e');
     }
   }
 
@@ -226,21 +227,6 @@ class _EnhancedChangeLocationScreenState
                     inputDecoration: InputDecoration(
                       hintText: 'Enter address',
                       prefixIcon: const Icon(Icons.search),
-                      suffixIcon:
-                          _isLoading
-                              ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                              : IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () {
-                                  _addressController.clear();
-                                },
-                              ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(color: AppColors.grey),
@@ -250,7 +236,7 @@ class _EnhancedChangeLocationScreenState
                         borderSide: BorderSide(color: AppColors.primaryGreen),
                       ),
                     ),
-                    debounceTime: 800,
+                    debounceTime: 600,
                     countries: const ["ca"], // Limit to Canada
                     isLatLngRequired: true,
                     getPlaceDetailWithLatLng: (Prediction prediction) {
@@ -300,6 +286,11 @@ class _EnhancedChangeLocationScreenState
                       );
                     },
                     isCrossBtnShown: true,
+                    boxDecoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF2D2D30) : AppColors.white,
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   )
                 else
                   // Fallback to regular text field if API key not available

@@ -6,8 +6,7 @@ import '../services/moderation_service.dart';
 class ModeratorDashboard extends StatefulWidget {
   final AppUser currentUser;
 
-  const ModeratorDashboard({Key? key, required this.currentUser})
-    : super(key: key);
+  const ModeratorDashboard({super.key, required this.currentUser});
 
   @override
   State<ModeratorDashboard> createState() => _ModeratorDashboardState();

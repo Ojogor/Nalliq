@@ -21,6 +21,8 @@ import '../profile/screens/history_screen.dart';
 import '../settings/screens/settings_screen.dart';
 import '../settings/screens/accessibility_settings_screen.dart';
 import '../settings/screens/language_settings_screen.dart';
+import '../settings/screens/help_support_screen.dart';
+import '../settings/screens/about_nalliq_screen.dart';
 import '../exchange/screens/barter_detail_screen.dart';
 import '../navigation/main_navigation.dart';
 import '../debug/debug_screen.dart';
@@ -228,6 +230,16 @@ class AppRouter {
                 path: 'language',
                 name: 'language-settings',
                 builder: (context, state) => const LanguageSettingsScreen(),
+              ),
+              GoRoute(
+                path: 'help-support',
+                name: 'help-support',
+                builder: (context, state) => const HelpSupportScreen(),
+              ),
+              GoRoute(
+                path: 'about-nalliq',
+                name: 'about-nalliq',
+                builder: (context, state) => const AboutNalliqScreen(),
               ),
             ],
           ),

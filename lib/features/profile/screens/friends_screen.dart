@@ -12,7 +12,7 @@ class FriendsScreen extends StatefulWidget {
 
 class _FriendsScreenState extends State<FriendsScreen> {
   bool _isLoading = true;
-  List<dynamic> _friends = [];
+  final List<dynamic> _friends = [];
 
   @override
   void initState() {

@@ -58,14 +58,7 @@ class FirebaseLocationService {
         final data = doc.data();
         if (data['location'] != null) {
           final location = UserLocation.fromJson(data['location']);
-          users.add(
-            MapUser(
-              id: doc.id,
-              name: data['displayName'] ?? 'Unknown User',
-              profilePictureUrl: data['profilePictureUrl'],
-              location: location,
-            ),
-          );
+          users.add(MapUser.fromFirestore(doc.id, data, location));
         }
       }
       return users;
@@ -95,14 +88,7 @@ class FirebaseLocationService {
               print('📍 Location data: ${data['location']}');
               if (data['location'] != null) {
                 final location = UserLocation.fromJson(data['location']);
-                users.add(
-                  MapUser(
-                    id: doc.id,
-                    name: data['displayName'] ?? 'Unknown User',
-                    profilePictureUrl: data['profilePictureUrl'],
-                    location: location,
-                  ),
-                );
+                users.add(MapUser.fromFirestore(doc.id, data, location));
                 print('✅ Added user ${data['displayName']} to map users list');
               } else {
                 print('⚠️ User ${doc.id} has no location data');
@@ -165,11 +151,41 @@ class MapUser {
   final String name;
   final String? profilePictureUrl;
   final UserLocation location;
+  final String? userType; // 'community', 'food_bank', null for regular users
+  final List<String>?
+  availableCategories; // Categories of items they have available
+  final double? trustScore; // User's trust score for rating filtering
+  final bool? isFriend; // Whether this user is a friend of the current user
 
   MapUser({
     required this.id,
     required this.name,
     this.profilePictureUrl,
     required this.location,
+    this.userType,
+    this.availableCategories,
+    this.trustScore,
+    this.isFriend,
   });
+
+  // Factory constructor to create from Firestore data
+  factory MapUser.fromFirestore(
+    String id,
+    Map<String, dynamic> data,
+    UserLocation userLocation,
+  ) {
+    return MapUser(
+      id: id,
+      name: data['displayName'] ?? 'Unknown User',
+      profilePictureUrl: data['profilePictureUrl'],
+      location: userLocation,
+      userType: data['userType'],
+      availableCategories:
+          data['availableCategories'] != null
+              ? List<String>.from(data['availableCategories'])
+              : null,
+      trustScore: data['trustScore']?.toDouble(),
+      isFriend: data['isFriend'],
+    );
+  }
 }

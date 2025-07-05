@@ -30,7 +30,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
   ItemCategory _selectedCategory = ItemCategory.other;
   ItemCondition _selectedCondition = ItemCondition.good;
   DateTime? _expiryDate;
-  List<File> _selectedImages = [];
+  final List<File> _selectedImages = [];
   bool _isForDonation = true;
   bool _isForBarter = true;
 
@@ -266,12 +266,13 @@ class _AddItemScreenState extends State<AddItemScreen> {
           DropdownButtonFormField<ItemCategory>(
             value: _selectedCategory,
             decoration: const InputDecoration(labelText: 'Category'),
-            items: ItemCategory.values.map((category) {
-              return DropdownMenuItem(
-                value: category,
-                child: Text(_getCategoryDisplayName(category)),
-              );
-            }).toList(),
+            items:
+                ItemCategory.values.map((category) {
+                  return DropdownMenuItem(
+                    value: category,
+                    child: Text(_getCategoryDisplayName(category)),
+                  );
+                }).toList(),
             onChanged: (value) {
               if (value != null) {
                 setState(() {
@@ -351,12 +352,13 @@ class _AddItemScreenState extends State<AddItemScreen> {
           DropdownButtonFormField<ItemCondition>(
             value: _selectedCondition,
             decoration: const InputDecoration(labelText: 'Condition'),
-            items: ItemCondition.values.map((condition) {
-              return DropdownMenuItem(
-                value: condition,
-                child: Text(_getConditionDisplayName(condition)),
-              );
-            }).toList(),
+            items:
+                ItemCondition.values.map((condition) {
+                  return DropdownMenuItem(
+                    value: condition,
+                    child: Text(_getConditionDisplayName(condition)),
+                  );
+                }).toList(),
             onChanged: (value) {
               if (value != null) {
                 setState(() {
@@ -380,9 +382,10 @@ class _AddItemScreenState extends State<AddItemScreen> {
                     ? '${_expiryDate!.day}/${_expiryDate!.month}/${_expiryDate!.year}'
                     : 'Select expiry date',
                 style: TextStyle(
-                  color: _expiryDate != null
-                      ? AppColors.textPrimary
-                      : AppColors.textHint,
+                  color:
+                      _expiryDate != null
+                          ? AppColors.textPrimary
+                          : AppColors.textHint,
                 ),
               ),
             ),

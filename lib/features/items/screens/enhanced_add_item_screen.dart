@@ -22,7 +22,7 @@ class _EnhancedAddItemScreenState extends State<EnhancedAddItemScreen> {
   final PageController _pageController = PageController(
     initialPage: 1,
   ); // Start on form page
-  List<ProductDraft> _productDrafts = [];
+  final List<ProductDraft> _productDrafts = [];
   int _currentPage = 1; // Start with form page (1), camera is page 0
   int _currentProductIndex = 0;
 

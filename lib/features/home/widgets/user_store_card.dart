@@ -82,7 +82,7 @@ class UserStoreCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '${store.user.trustScore.toStringAsFixed(1)}',
+                                store.user.trustScore.toStringAsFixed(1),
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,

@@ -13,6 +13,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/services/firebase_location_service.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/models/food_item_model.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../location/providers/new_location_provider.dart';
 import '../widgets/map_filters_bottom_sheet.dart';
@@ -27,7 +28,6 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   GoogleMapController? _mapController;
   Set<Marker> _markers = {}; // Make non-final to allow updates
-  Set<Marker> _allMarkers = {}; // Store all markers before filtering
   bool _isLoading = true; // Initialize to true
   StreamSubscription<List<MapUser>>? _nearbyUsersSubscription;
   List<MapFilter> _activeFilters = [];
@@ -187,7 +187,7 @@ class _MapScreenState extends State<MapScreen> {
         ),
       );
 
-      print('✅ Added marker for user: ${user.name} at ${obfuscatedPosition}');
+      print('✅ Added marker for user: ${user.name} at $obfuscatedPosition');
     }
 
     print('👥 Other users processed: $otherUsersCount');
@@ -195,7 +195,6 @@ class _MapScreenState extends State<MapScreen> {
     if (mounted) {
       setState(() {
         _markers = markers;
-        _allMarkers = markers; // Store all markers
       });
       print('🎯 Total markers set: ${markers.length}');
     }
@@ -218,7 +217,9 @@ class _MapScreenState extends State<MapScreen> {
     List<MapUser> users,
     UserLocation? currentLocation,
   ) {
-    if (_activeFilters.isEmpty) return users;
+    if (_activeFilters.isEmpty || _activeFilters.every((f) => !f.isActive)) {
+      return users;
+    }
 
     List<MapUser> filtered = users;
 
@@ -244,28 +245,49 @@ class _MapScreenState extends State<MapScreen> {
           if (userType != UserType.all) {
             filtered =
                 filtered.where((user) {
-                  // This would need to be implemented based on your user model
-                  // For now, showing all users regardless of type
-                  return true;
+                  switch (userType) {
+                    case UserType.community:
+                      return user.userType == 'community' ||
+                          user.userType == null;
+                    case UserType.friends:
+                      return user.isFriend ?? false;
+                    case UserType.foodBanks:
+                      return user.userType == 'food_bank';
+                    case UserType.all:
+                      return true;
+                  }
                 }).toList();
           }
           break;
 
         case FilterType.itemCategory:
           if (filter.value != null) {
-            // This would filter based on available items in user's store
-            // Implementation depends on your data structure
+            final category = filter.value as ItemCategory;
+            filtered =
+                filtered.where((user) {
+                  return user.availableCategories?.contains(category.name) ??
+                      false;
+                }).toList();
           }
           break;
 
         case FilterType.rating:
-          if (filter.value > 0) {
-            // This would filter based on user rating
-            // Implementation depends on your user model having ratings
+          final minRating = filter.value as double;
+          if (minRating > 0.0) {
+            filtered =
+                filtered.where((user) {
+                  final rating = user.trustScore ?? 0.0;
+                  return rating >= minRating;
+                }).toList();
           }
           break;
       }
     }
+
+    print(
+      '🎯 Applied filters: ${_activeFilters.where((f) => f.isActive).map((f) => f.name).join(', ')}',
+    );
+    print('🎯 Users after filtering: ${filtered.length}/${users.length}');
 
     return filtered;
   }

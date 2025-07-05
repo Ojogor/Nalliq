@@ -5,7 +5,7 @@ import '../services/moderation_service.dart';
 class BanScreen extends StatelessWidget {
   final AppUser user;
 
-  const BanScreen({Key? key, required this.user}) : super(key: key);
+  const BanScreen({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {

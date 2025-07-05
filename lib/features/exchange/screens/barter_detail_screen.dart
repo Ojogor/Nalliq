@@ -29,7 +29,7 @@ class _BarterDetailScreenState extends State<BarterDetailScreen> {
   ExchangeRequest? _request;
   List<FoodItem> _requestedItems = [];
   List<FoodItem> _offeredItems = [];
-  Map<String, String> _userDisplayNames = {};
+  final Map<String, String> _userDisplayNames = {};
   bool _isLoading = true;
   String? _error;
   DateTime? _selectedMeetingTime;

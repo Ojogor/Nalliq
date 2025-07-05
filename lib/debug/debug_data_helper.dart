@@ -1,6 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../core/models/user_model.dart';
-import '../core/models/food_item_model.dart';
 import 'cleanup_profile_urls.dart';
 
 class DebugDataHelper {

@@ -15,7 +15,7 @@ class LocationSelectionScreen extends StatefulWidget {
 class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
   LatLng _selectedLocation = const LatLng(45.4215, -75.6972); // Default Ottawa
   bool _isLoading = true;
-  String _selectedAddress = '';
+  final String _selectedAddress = '';
   bool _isSaving = false;
   final TextEditingController _addressController = TextEditingController();
 

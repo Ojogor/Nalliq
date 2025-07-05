@@ -10,11 +10,11 @@ class AuthWrapper extends StatelessWidget {
   final Widget unauthenticatedChild;
 
   const AuthWrapper({
-    Key? key,
+    super.key,
     required this.user,
     required this.authenticatedChild,
     required this.unauthenticatedChild,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -25,7 +25,7 @@ class _CameraOverlayWidgetState extends State<CameraOverlayWidget> {
   CameraController? _controller;
   List<CameraDescription> _cameras = [];
   int _currentPhotoIndex = 0;
-  List<File> _capturedPhotos = [];
+  final List<File> _capturedPhotos = [];
   bool _isInitialized = false;
 
   @override

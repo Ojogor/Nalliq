@@ -12,7 +12,7 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   bool _isLoading = true;
-  List<dynamic> _exchangeHistory = [];
+  final List<dynamic> _exchangeHistory = [];
 
   @override
   void initState() {
