@@ -12,8 +12,10 @@ import 'package:nalliq/core/models/user_location.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/services/firebase_location_service.dart';
+import '../../../core/constants/app_colors.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../location/providers/new_location_provider.dart';
+import '../widgets/map_filters_bottom_sheet.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -25,8 +27,11 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   GoogleMapController? _mapController;
   Set<Marker> _markers = {}; // Make non-final to allow updates
+  Set<Marker> _allMarkers = {}; // Store all markers before filtering
   bool _isLoading = true; // Initialize to true
   StreamSubscription<List<MapUser>>? _nearbyUsersSubscription;
+  List<MapFilter> _activeFilters = [];
+  List<MapUser> _allUsers = []; // Store all users for filtering
 
   @override
   void initState() {
@@ -54,8 +59,13 @@ class _MapScreenState extends State<MapScreen> {
     // Subscribe to stream for real-time updates
     _nearbyUsersSubscription = locationProvider.nearbyUsersStream.listen(
       (users) {
-        _createMarkers(
+        _allUsers = users; // Store all users
+        final filteredUsers = _applyFilters(
           users,
+          locationProvider.currentLocation,
+        );
+        _createMarkers(
+          filteredUsers,
           locationProvider.currentLocation,
           authProvider.user?.uid,
         );
@@ -185,6 +195,7 @@ class _MapScreenState extends State<MapScreen> {
     if (mounted) {
       setState(() {
         _markers = markers;
+        _allMarkers = markers; // Store all markers
       });
       print('🎯 Total markers set: ${markers.length}');
     }
@@ -201,6 +212,95 @@ class _MapScreenState extends State<MapScreen> {
       original.latitude + latOffset,
       original.longitude + lngOffset,
     );
+  }
+
+  List<MapUser> _applyFilters(
+    List<MapUser> users,
+    UserLocation? currentLocation,
+  ) {
+    if (_activeFilters.isEmpty) return users;
+
+    List<MapUser> filtered = users;
+
+    for (final filter in _activeFilters) {
+      if (!filter.isActive) continue;
+
+      switch (filter.type) {
+        case FilterType.distance:
+          if (currentLocation != null) {
+            filtered =
+                filtered.where((user) {
+                  final distance = FirebaseLocationService.calculateDistance(
+                    currentLocation,
+                    user.location,
+                  );
+                  return distance <= filter.value;
+                }).toList();
+          }
+          break;
+
+        case FilterType.userType:
+          final userType = filter.value as UserType;
+          if (userType != UserType.all) {
+            filtered =
+                filtered.where((user) {
+                  // This would need to be implemented based on your user model
+                  // For now, showing all users regardless of type
+                  return true;
+                }).toList();
+          }
+          break;
+
+        case FilterType.itemCategory:
+          if (filter.value != null) {
+            // This would filter based on available items in user's store
+            // Implementation depends on your data structure
+          }
+          break;
+
+        case FilterType.rating:
+          if (filter.value > 0) {
+            // This would filter based on user rating
+            // Implementation depends on your user model having ratings
+          }
+          break;
+      }
+    }
+
+    return filtered;
+  }
+
+  void _showFiltersBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder:
+          (context) => MapFiltersBottomSheet(
+            currentFilters: _activeFilters,
+            onFiltersChanged: (filters) {
+              setState(() {
+                _activeFilters = filters;
+              });
+              // Reapply filters to current users
+              final locationProvider = context.read<LocationProvider>();
+              final filteredUsers = _applyFilters(
+                _allUsers,
+                locationProvider.currentLocation,
+              );
+              final authProvider = context.read<AuthProvider>();
+              _createMarkers(
+                filteredUsers,
+                locationProvider.currentLocation,
+                authProvider.user?.uid,
+              );
+            },
+          ),
+    );
+  }
+
+  int get _activeFilterCount {
+    return _activeFilters.where((filter) => filter.isActive).length;
   }
 
   @override
@@ -293,6 +393,54 @@ class _MapScreenState extends State<MapScreen> {
               backgroundColor: theme.colorScheme.surface,
               foregroundColor: theme.colorScheme.onSurface,
               child: const Icon(Icons.refresh),
+            ),
+          ),
+
+          // Filter Button (Bottom Right)
+          Positioned(
+            bottom: 20,
+            right: 16,
+            child: FloatingActionButton(
+              heroTag: "map_filter_fab",
+              onPressed: _showFiltersBottomSheet,
+              backgroundColor:
+                  _activeFilterCount > 0
+                      ? AppColors.primaryGreen
+                      : theme.colorScheme.surface,
+              foregroundColor:
+                  _activeFilterCount > 0
+                      ? Colors.white
+                      : theme.colorScheme.onSurface,
+              child: Stack(
+                children: [
+                  const Icon(Icons.filter_list),
+                  if (_activeFilterCount > 0)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          '$_activeFilterCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ],

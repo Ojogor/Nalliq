@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/models/user_location.dart';
 import '../../../core/widgets/custom_app_bar.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../location/providers/new_location_provider.dart';
-import '../../location/widgets/location_picker_screen.dart';
 
 class ManageLocationScreen extends StatefulWidget {
   const ManageLocationScreen({super.key});
@@ -125,29 +125,22 @@ class _ManageLocationScreenState extends State<ManageLocationScreen> {
                           child: CustomButton(
                             text: 'Change Location',
                             onPressed: () async {
-                              // Navigate to location picker
-                              await Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder:
-                                      (context) => LocationPickerScreen(
-                                        initialLocation: location,
-                                        onLocationSelected: (newLocation) {
-                                          // Location will be updated automatically
-                                          // by the LocationPickerScreen
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Location updated successfully!',
-                                              ),
-                                              backgroundColor: Colors.green,
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                ),
+                              // Navigate to enhanced change location screen
+                              final result = await context.push(
+                                '/enhanced-change-location',
                               );
+                              if (result != null && result is UserLocation) {
+                                // Update the location provider with the new location
+                                await locationProvider.updateLocation(result);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Location updated successfully!',
+                                    ),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
                             },
                           ),
                         ),

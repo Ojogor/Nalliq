@@ -26,6 +26,7 @@ import '../navigation/main_navigation.dart';
 import '../debug/debug_screen.dart';
 import '../search/screens/search_screen.dart';
 import '../profile/screens/manage_location_screen.dart';
+import '../location/screens/enhanced_change_location_screen.dart';
 import '../map/screens/new_map_screen.dart' as new_map;
 import '../profile/screens/improve_trust_score_screen.dart';
 import '../trust/screens/trust_score_screen.dart';
@@ -239,6 +240,11 @@ class AppRouter {
             path: '/change-location',
             name: 'change-location',
             builder: (context, state) => const ManageLocationScreen(),
+          ),
+          GoRoute(
+            path: '/enhanced-change-location',
+            name: 'enhanced-change-location',
+            builder: (context, state) => const EnhancedChangeLocationScreen(),
           ),
           GoRoute(
             path: '/search',

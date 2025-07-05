@@ -23,97 +23,142 @@ class SettingsScreen extends StatelessWidget {
         backgroundColor: isDark ? Colors.grey[850] : AppColors.white,
         foregroundColor: isDark ? AppColors.white : AppColors.black,
       ),
-      body: ListView(
+      body: Column(
         children: [
-          _buildSectionTitle(context, localizations.account),
-          _buildSettingsTile(
-            context,
-            icon: Icons.lock_outline,
-            title: localizations.changePassword,
-            onTap: () {
-              context.pushNamed('change-password');
-            },
-          ),
-          _buildSettingsTile(
-            context,
-            icon: Icons.location_on_outlined,
-            title: localizations.manageLocation,
-            onTap: () => context.push('/change-location'),
-          ),
-          _buildSettingsTile(
-            context,
-            icon: Icons.shield_outlined,
-            title: localizations.privacy,
-            onTap: () {
-              // TODO: Implement privacy screen
-            },
-          ),
-          const Divider(),
-          _buildSectionTitle(context, localizations.appearance),
-          SwitchListTile(
-            title: Text(localizations.darkMode),
-            value: settingsProvider.darkTheme,
-            onChanged: (value) {
-              settingsProvider.toggleDarkMode();
-            },
-            secondary: Icon(
-              settingsProvider.darkTheme
-                  ? Icons.dark_mode_outlined
-                  : Icons.light_mode_outlined,
+          // Top banner with "Settings" title
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              vertical: 20.0,
+              horizontal: 16.0,
+            ),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primaryGreen,
+                  AppColors.primaryGreen.withOpacity(0.8),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Settings',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    color: AppColors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Manage your account and preferences',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.white.withOpacity(0.9),
+                  ),
+                ),
+              ],
             ),
           ),
-          _buildSettingsTile(
-            context,
-            icon: Icons.accessibility_new_outlined,
-            title: localizations.accessibility,
-            onTap: () {
-              context.go('/settings/accessibility');
-            },
-          ),
-          _buildSettingsTile(
-            context,
-            icon: Icons.language_outlined,
-            title: localizations.language,
-            onTap: () {
-              context.go('/settings/language');
-            },
-          ),
-          const Divider(),
-          _buildSectionTitle(context, localizations.support),
-          _buildSettingsTile(
-            context,
-            icon: Icons.help_outline,
-            title: localizations.helpAndSupport,
-            onTap: () {
-              // TODO: Implement help screen
-            },
-          ),
-          _buildSettingsTile(
-            context,
-            icon: Icons.info_outline,
-            title: localizations.aboutNalliq,
-            onTap: () {
-              // TODO: Implement about screen
-            },
-          ),
-          _buildSettingsTile(
-            context,
-            icon: Icons.gavel_outlined,
-            title: localizations.termsAndConditions,
-            onTap: () {
-              // TODO: Implement terms and conditions screen
-            },
-          ),
-          const Divider(),
-          _buildSettingsTile(
-            context,
-            icon: Icons.logout,
-            title: localizations.logout,
-            onTap: () async {
-              await authProvider.signOut();
-              context.go('/login');
-            },
-            color: Colors.red,
+          // Settings content
+          Expanded(
+            child: ListView(
+              children: [
+                _buildSectionTitle(context, localizations.account),
+                _buildSettingsTile(
+                  context,
+                  icon: Icons.lock_outline,
+                  title: localizations.changePassword,
+                  onTap: () {
+                    context.pushNamed('change-password');
+                  },
+                ),
+                _buildSettingsTile(
+                  context,
+                  icon: Icons.shield_outlined,
+                  title: localizations.privacy,
+                  onTap: () {
+                    // TODO: Implement privacy screen
+                  },
+                ),
+                const Divider(),
+                _buildSectionTitle(context, localizations.appearance),
+                SwitchListTile(
+                  title: Text(localizations.darkMode),
+                  value: settingsProvider.darkTheme,
+                  onChanged: (value) {
+                    settingsProvider.toggleDarkMode();
+                  },
+                  secondary: Icon(
+                    settingsProvider.darkTheme
+                        ? Icons.dark_mode_outlined
+                        : Icons.light_mode_outlined,
+                  ),
+                ),
+                _buildSettingsTile(
+                  context,
+                  icon: Icons.accessibility_new_outlined,
+                  title: localizations.accessibility,
+                  onTap: () {
+                    context.go('/settings/accessibility');
+                  },
+                ),
+                _buildSettingsTile(
+                  context,
+                  icon: Icons.language_outlined,
+                  title: localizations.language,
+                  onTap: () {
+                    context.go('/settings/language');
+                  },
+                ),
+                const Divider(),
+                _buildSectionTitle(context, localizations.support),
+                _buildSettingsTile(
+                  context,
+                  icon: Icons.help_outline,
+                  title: localizations.helpAndSupport,
+                  onTap: () {
+                    // TODO: Implement help screen
+                  },
+                ),
+                _buildSettingsTile(
+                  context,
+                  icon: Icons.info_outline,
+                  title: localizations.aboutNalliq,
+                  onTap: () {
+                    // TODO: Implement about screen
+                  },
+                ),
+                _buildSettingsTile(
+                  context,
+                  icon: Icons.gavel_outlined,
+                  title: localizations.termsAndConditions,
+                  onTap: () {
+                    context.pushNamed('terms-and-conditions');
+                  },
+                ),
+                const Divider(),
+                _buildSettingsTile(
+                  context,
+                  icon: Icons.logout,
+                  title: localizations.logout,
+                  onTap: () async {
+                    await authProvider.signOut();
+                    context.go('/login');
+                  },
+                  color: Colors.red,
+                ),
+              ],
+            ),
           ),
         ],
       ),

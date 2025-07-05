@@ -15,7 +15,7 @@ enum ItemCategory {
   other,
 }
 
-enum ItemStatus { available, pending, completed, expired }
+enum ItemStatus { draft, available, pending, completed, expired }
 
 class FoodItem {
   final String id;
