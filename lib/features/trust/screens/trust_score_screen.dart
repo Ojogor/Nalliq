@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/models/certification_model.dart';
 import '../../../core/models/trust_score_model.dart';
 import '../../../core/models/trust_violation_model.dart';
+import '../../../core/models/id_verification_model.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/trust_score_provider.dart';
 
@@ -267,6 +268,37 @@ class _TrustScoreScreenState extends State<TrustScoreScreen> {
     TrustScoreProvider trustProvider,
     AuthProvider authProvider,
   ) {
+    // Get ID verification status
+    String idStatus = 'Not Verified';
+    Color idColor = AppColors.warning;
+    IconData idIcon = Icons.person_outline;
+
+    if (trustProvider.idVerifications.isNotEmpty) {
+      final latestVerification = trustProvider.idVerifications.first;
+      switch (latestVerification.status) {
+        case IDVerificationStatus.pending:
+          idStatus = 'Under Review';
+          idColor = AppColors.info;
+          idIcon = Icons.hourglass_empty;
+          break;
+        case IDVerificationStatus.approved:
+          idStatus = 'Verified';
+          idColor = AppColors.success;
+          idIcon = Icons.verified_user;
+          break;
+        case IDVerificationStatus.rejected:
+          idStatus = 'Rejected';
+          idColor = AppColors.error;
+          idIcon = Icons.error_outline;
+          break;
+        case IDVerificationStatus.expired:
+          idStatus = 'Expired';
+          idColor = AppColors.warning;
+          idIcon = Icons.warning_outlined;
+          break;
+      }
+    }
+
     return Column(
       children: [
         Row(
@@ -274,13 +306,9 @@ class _TrustScoreScreenState extends State<TrustScoreScreen> {
             Expanded(
               child: _buildActionCard(
                 'ID Verification',
-                trustProvider.isIDVerified() ? 'Verified' : 'Not Verified',
-                trustProvider.isIDVerified()
-                    ? Icons.verified_user
-                    : Icons.person_outline,
-                trustProvider.isIDVerified()
-                    ? AppColors.success
-                    : AppColors.warning,
+                idStatus,
+                idIcon,
+                idColor,
                 () => context.push('/id-verification'),
               ),
             ),

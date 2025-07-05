@@ -3,7 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsProvider extends ChangeNotifier {
   // Theme settings
-  bool _darkModeEnabled = false;
+  bool _darkTheme = false;
+  Locale _locale = const Locale('en', '');
   String _selectedLanguage = 'English';
 
   // Notification settings
@@ -34,7 +35,8 @@ class SettingsProvider extends ChangeNotifier {
   double _soundVolume = 0.8;
 
   // Getters
-  bool get darkModeEnabled => _darkModeEnabled;
+  bool get darkTheme => _darkTheme;
+  Locale get locale => _locale;
   String get selectedLanguage => _selectedLanguage;
   bool get pushNotificationsEnabled => _pushNotificationsEnabled;
   bool get chatNotificationsEnabled => _chatNotificationsEnabled;
@@ -63,8 +65,10 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
 
-    _darkModeEnabled = prefs.getBool('darkModeEnabled') ?? false;
+    _darkTheme = prefs.getBool('darkTheme') ?? false;
     _selectedLanguage = prefs.getString('selectedLanguage') ?? 'English';
+    _locale = Locale(getLanguageCode(), '');
+
     _pushNotificationsEnabled =
         prefs.getBool('pushNotificationsEnabled') ?? true;
     _chatNotificationsEnabled =
@@ -89,10 +93,37 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Method to update dark mode
+  Future<void> updateDarkMode(bool enabled) async {
+    _darkTheme = enabled;
+    await _saveSettings();
+    notifyListeners();
+  }
+
+  // Method to update language setting
+  Future<void> updateLanguage(String language) async {
+    _selectedLanguage = language;
+    _locale = Locale(getLanguageCode(), '');
+    await _saveSettings();
+    notifyListeners();
+  }
+
+  String getLanguageCode() {
+    switch (_selectedLanguage) {
+      case 'English':
+        return 'en';
+      case 'French':
+      case 'Français':
+        return 'fr';
+      default:
+        return 'en';
+    }
+  }
+
   Future<void> _saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
 
-    await prefs.setBool('darkModeEnabled', _darkModeEnabled);
+    await prefs.setBool('darkTheme', _darkTheme);
     await prefs.setString('selectedLanguage', _selectedLanguage);
     await prefs.setBool('pushNotificationsEnabled', _pushNotificationsEnabled);
     await prefs.setBool('chatNotificationsEnabled', _chatNotificationsEnabled);
@@ -118,14 +149,9 @@ class SettingsProvider extends ChangeNotifier {
 
   // Theme settings
   Future<void> toggleDarkMode() async {
-    _darkModeEnabled = !_darkModeEnabled;
-    await _saveSettings();
-    notifyListeners();
-  }
-
-  Future<void> updateLanguage(String language) async {
-    _selectedLanguage = language;
-    await _saveSettings();
+    _darkTheme = !_darkTheme;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('darkTheme', _darkTheme);
     notifyListeners();
   }
 
@@ -237,16 +263,6 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  String getLanguageCode() {
-    switch (_selectedLanguage) {
-      case 'French':
-      case 'Français':
-        return 'fr';
-      default:
-        return 'en';
-    }
-  }
-
   // Get available languages
   List<Map<String, String>> getAvailableLanguages() {
     return [
@@ -257,7 +273,7 @@ class SettingsProvider extends ChangeNotifier {
 
   // Get theme data based on settings
   ThemeData getThemeData(BuildContext context) {
-    final baseTheme = _darkModeEnabled ? ThemeData.dark() : ThemeData.light();
+    final baseTheme = _darkTheme ? ThemeData.dark() : ThemeData.light();
 
     // Ensure text scale factor is valid
     final safeFontSizeFactor =
@@ -272,10 +288,35 @@ class SettingsProvider extends ChangeNotifier {
               : baseTheme.textTheme,
       colorScheme:
           _highContrastEnabled
-              ? (_darkModeEnabled
+              ? (_darkTheme
                   ? const ColorScheme.highContrastDark()
                   : const ColorScheme.highContrastLight())
               : baseTheme.colorScheme,
     );
+  }
+
+  Future<void> updateHighContrast(bool enabled) async {
+    _highContrastEnabled = enabled;
+    await _saveSettings();
+    notifyListeners();
+  }
+
+  Future<void> updateTextScaleFactor(double factor) async {
+    _textScaleFactor = factor;
+    await _saveSettings();
+    notifyListeners();
+  }
+
+  Future<void> updateReducedMotion(bool enabled) async {
+    _reducedMotionEnabled = enabled;
+    await _saveSettings();
+    notifyListeners();
+  }
+
+  // Method to update sound settings
+  Future<void> updateSound(bool enabled) async {
+    _soundEnabled = enabled;
+    await _saveSettings();
+    notifyListeners();
   }
 }

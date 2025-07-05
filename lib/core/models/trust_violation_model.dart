@@ -76,7 +76,10 @@ class TrustViolation {
       ),
       description: data['description'] ?? '',
       evidence: data['evidence'],
-      reportedAt: (data['reportedAt'] as Timestamp).toDate(),
+      reportedAt:
+          data['reportedAt'] != null
+              ? (data['reportedAt'] as Timestamp).toDate()
+              : DateTime.now(),
       reviewedAt:
           data['reviewedAt'] != null
               ? (data['reviewedAt'] as Timestamp).toDate()

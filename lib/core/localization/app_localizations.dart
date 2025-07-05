@@ -38,6 +38,51 @@ class AppLocalizations {
       _localizedValues[locale.languageCode]?['settings'] ?? 'Settings';
   String get cart => _localizedValues[locale.languageCode]?['cart'] ?? 'Cart';
 
+  // Home screen
+  String get appTitle =>
+      _localizedValues[locale.languageCode]?['app_title'] ?? 'Nalliq';
+  String get communityMap =>
+      _localizedValues[locale.languageCode]?['community_map'] ??
+      'Community Map';
+  String get search =>
+      _localizedValues[locale.languageCode]?['search'] ?? 'Search';
+  String get welcomeMessage =>
+      _localizedValues[locale.languageCode]?['welcome_message'] ??
+      'Welcome to Nalliq!';
+  String get discoverStores =>
+      _localizedValues[locale.languageCode]?['discover_stores'] ??
+      'Discover local stores and connect with your community';
+  String get quickActions =>
+      _localizedValues[locale.languageCode]?['quick_actions'] ??
+      'Quick Actions';
+  String get scanProduct =>
+      _localizedValues[locale.languageCode]?['scan_product'] ?? 'Scan Product';
+  String get findProductsNearby =>
+      _localizedValues[locale.languageCode]?['find_products_nearby'] ??
+      'Find products nearby';
+  String get addStore =>
+      _localizedValues[locale.languageCode]?['add_store'] ?? 'Add Store';
+  String get createYourStore =>
+      _localizedValues[locale.languageCode]?['create_your_store'] ??
+      'Create your own store';
+  String get communityStores =>
+      _localizedValues[locale.languageCode]?['community_stores'] ??
+      'Community Stores';
+  String get friendsStores =>
+      _localizedValues[locale.languageCode]?['friends_stores'] ??
+      'Friends Stores';
+  String get foodBankStores =>
+      _localizedValues[locale.languageCode]?['food_bank_stores'] ??
+      'Food Bank Stores';
+  String get noStoresFound =>
+      _localizedValues[locale.languageCode]?['no_stores_found'] ??
+      'No stores found in this category yet.';
+  String get errorLoadingData =>
+      _localizedValues[locale.languageCode]?['error_loading_data'] ??
+      'Error loading data';
+  String get tryAgain =>
+      _localizedValues[locale.languageCode]?['try_again'] ?? 'Try Again';
+
   // Settings
   String get account =>
       _localizedValues[locale.languageCode]?['account'] ?? 'Account';
@@ -164,6 +209,37 @@ class AppLocalizations {
       _localizedValues[locale.languageCode]?['password_changed_successfully'] ??
       'Password changed successfully';
 
+  String get manageLocation =>
+      _localizedValues[locale.languageCode]?['manage_location'] ??
+      'Manage Location';
+
+  String get helpAndSupport =>
+      _localizedValues[locale.languageCode]?['help_and_support'] ??
+      'Help & Support';
+
+  String get aboutNalliq =>
+      _localizedValues[locale.languageCode]?['about_nalliq'] ?? 'About Nalliq';
+
+  String get termsAndConditions =>
+      _localizedValues[locale.languageCode]?['terms_and_conditions'] ??
+      'Terms and Conditions';
+
+  String get highContrastMode =>
+      _localizedValues[locale.languageCode]?['high_contrast_mode'] ??
+      'High Contrast Mode';
+
+  String get highContrastModeDescription =>
+      _localizedValues[locale
+          .languageCode]?['high_contrast_mode_description'] ??
+      'Uses a higher contrast color scheme.';
+
+  String get textSize =>
+      _localizedValues[locale.languageCode]?['text_size'] ?? 'Text Size';
+
+  String get reducedMotionDescription =>
+      _localizedValues[locale.languageCode]?['reduced_motion_description'] ??
+      'Reduces animations and motion effects.';
+
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
       'app_name': 'Nalliq',
@@ -179,6 +255,23 @@ class AppLocalizations {
       'profile': 'Profile',
       'settings': 'Settings',
       'cart': 'Cart',
+      'app_title': 'Nalliq',
+      'community_map': 'Community Map',
+      'search': 'Search',
+      'welcome_message': 'Welcome to Nalliq!',
+      'discover_stores':
+          'Discover local stores and connect with your community',
+      'quick_actions': 'Quick Actions',
+      'scan_product': 'Scan Product',
+      'find_products_nearby': 'Find products nearby',
+      'add_store': 'Add Store',
+      'create_your_store': 'Create your own store',
+      'community_stores': 'Community Stores',
+      'friends_stores': 'Friends Stores',
+      'food_bank_stores': 'Food Bank Stores',
+      'no_stores_found': 'No stores found in this category yet.',
+      'error_loading_data': 'Error loading data',
+      'try_again': 'Try Again',
       'account': 'Account',
       'appearance': 'Appearance',
       'notifications': 'Notifications',
@@ -224,6 +317,15 @@ class AppLocalizations {
       'passwords_do_not_match': 'Passwords do not match',
       'password_too_short': 'Password must be at least 6 characters',
       'password_changed_successfully': 'Password changed successfully',
+      'help': 'Help',
+      'terms_and_conditions': 'Terms and Conditions',
+      'manage_location': 'Manage Location',
+      'help_and_support': 'Help & Support',
+      'about_nalliq': 'About Nalliq',
+      'high_contrast_mode': 'High Contrast Mode',
+      'high_contrast_mode_description': 'Uses a higher contrast color scheme.',
+      'text_size': 'Text Size',
+      'reduced_motion_description': 'Reduces animations and motion effects.',
     },
     'fr': {
       'app_name': 'Nalliq',
@@ -239,6 +341,23 @@ class AppLocalizations {
       'profile': 'Profil',
       'settings': 'Paramètres',
       'cart': 'Panier',
+      'app_title': 'Nalliq',
+      'community_map': 'Carte Communautaire',
+      'search': 'Recherche',
+      'welcome_message': 'Bienvenue sur Nalliq!',
+      'discover_stores':
+          'Découvrez les magasins locaux et connectez-vous avec votre communauté',
+      'quick_actions': 'Actions Rapides',
+      'scan_product': 'Scanner le produit',
+      'find_products_nearby': 'Trouver des produits à proximité',
+      'add_store': 'Ajouter un magasin',
+      'create_your_store': 'Créez votre propre magasin',
+      'community_stores': 'Magasins Communautaires',
+      'friends_stores': 'Magasins d\'Amis',
+      'food_bank_stores': 'Banques Alimentaires',
+      'no_stores_found': 'Aucun magasin trouvé dans cette catégorie.',
+      'error_loading_data': 'Erreur lors du chargement des données',
+      'try_again': 'Réessayer',
       'account': 'Compte',
       'appearance': 'Apparence',
       'notifications': 'Notifications',
@@ -285,6 +404,17 @@ class AppLocalizations {
       'password_too_short':
           'Le mot de passe doit contenir au moins 6 caractères',
       'password_changed_successfully': 'Mot de passe modifié avec succès',
+      'help': 'Aide',
+      'terms_and_conditions': 'Termes et conditions',
+      'manage_location': 'Gérer l\'emplacement',
+      'help_and_support': 'Aide et support',
+      'about_nalliq': 'À propos de Nalliq',
+      'high_contrast_mode': 'Mode Contraste élevé',
+      'high_contrast_mode_description':
+          'Utilise un jeu de couleurs à contraste plus élevé.',
+      'text_size': 'Taille du texte',
+      'reduced_motion_description':
+          'Réduit les animations et les effets de mouvement.',
     },
   };
 }

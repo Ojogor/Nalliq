@@ -1,8 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
-import '../../../core/models/food_item_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/models/user_model.dart';
+import '../../../core/models/food_item_model.dart';
 
 class StoreProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -12,15 +11,18 @@ class StoreProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   bool _isFriend = false;
-  bool _isFriendRequested = false;
-  bool _isRequesting = false;
+  bool _friendRequestSent = false;
+  bool _hasPendingRequestFromStore = false;
+  String? _pendingRequestId;
+
   AppUser? get storeUser => _storeUser;
   List<FoodItem> get storeItems => _storeItems;
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isFriend => _isFriend;
-  bool get isFriendRequested => _isFriendRequested;
-  bool get isRequesting => _isRequesting;
+  bool get friendRequestSent => _friendRequestSent;
+  bool get hasPendingRequestFromStore => _hasPendingRequestFromStore;
+  String? get pendingRequestId => _pendingRequestId;
 
   Future<void> loadStoreProfile(
     String storeUserId,
@@ -45,31 +47,46 @@ class StoreProvider extends ChangeNotifier {
       final currentUserDoc =
           await _firestore.collection('users').doc(currentUserId).get();
       if (currentUserDoc.exists) {
-        var friendIds = List<String>.from(
+        final friendIds = List<String>.from(
           currentUserDoc.data()?['friendIds'] ?? [],
         );
-        _isFriendRequested = friendIds.contains(storeUserId);
-        if (_isFriendRequested) {
-          final storeUserDoc =
-              await _firestore.collection('users').doc(storeUserId).get();
-          if (storeUserDoc.exists) {
-            friendIds = List<String>.from(
-              storeUserDoc.data()?['friendIds'] ?? [],
-            );
-            _isFriend = friendIds.contains(currentUserId);
-          }
-        } else if (!_isFriendRequested) {
-          final storeUserDoc =
-              await _firestore.collection('users').doc(storeUserId).get();
-          if (storeUserDoc.exists) {
-            friendIds = List<String>.from(
-              storeUserDoc.data()?['friendIds'] ?? [],
-            );
-            _isRequesting = friendIds.contains(currentUserId);
-          }
-        }
+        _isFriend = friendIds.contains(storeUserId);
       }
 
+      // Check for pending friend requests
+      final requestQuery =
+          await _firestore
+              .collection('friend_requests')
+              .where('fromUserId', isEqualTo: currentUserId)
+              .where('toUserId', isEqualTo: storeUserId)
+              .where('status', isEqualTo: 'pending')
+              .get();
+
+      if (requestQuery.docs.isNotEmpty) {
+        _friendRequestSent = true;
+        _pendingRequestId = requestQuery.docs.first.id;
+      } else {
+        _friendRequestSent = false;
+        _pendingRequestId = null;
+      }
+
+      final incomingRequestQuery =
+          await _firestore
+              .collection('friend_requests')
+              .where('fromUserId', isEqualTo: storeUserId)
+              .where('toUserId', isEqualTo: currentUserId)
+              .where('status', isEqualTo: 'pending')
+              .get();
+
+      if (incomingRequestQuery.docs.isNotEmpty) {
+        _hasPendingRequestFromStore = true;
+        _pendingRequestId = incomingRequestQuery.docs.first.id;
+      } else {
+        _hasPendingRequestFromStore = false;
+        if (!_friendRequestSent) {
+          _pendingRequestId = null;
+        }
+      }
       // Load store items
       final itemsQuery =
           await _firestore
@@ -94,43 +111,99 @@ class StoreProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> toggleFriend1(
+  Future<void> sendFriendRequest(
     String storeUserId,
     String currentUserId,
-    String action,
   ) async {
     try {
-      final currentUserRef = _firestore.collection('users').doc(currentUserId);
-      final storeUserRef = _firestore.collection('users').doc(storeUserId);
-      final currentUserDoc = await currentUserRef.get();
-      final storeUserDoc = await storeUserRef.get();
-      if (!currentUserDoc.exists) return;
-
-      final friendIds1 = List<String>.from(
-        currentUserDoc.data()?['friendIds'] ?? [],
-      );
-      final friendIds2 = List<String>.from(
-        storeUserDoc.data()?['friendIds'] ?? [],
-      );
-      if (action == "Confirm") {
-        friendIds1.add(storeUserId);
-        _isFriend = true;
-        _isRequesting = false;
-      } else if (action == "Delete") {
-        friendIds1.remove(storeUserId);
-        friendIds2.remove(currentUserId);
-        _isRequesting = false;
-      }
-      await currentUserRef.update({'friendIds': friendIds1});
-      await storeUserRef.update({'friendIds': friendIds2});
+      final requestRef = _firestore.collection('friend_requests').doc();
+      await requestRef.set({
+        'fromUserId': currentUserId,
+        'toUserId': storeUserId,
+        'status': 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      _friendRequestSent = true;
       notifyListeners();
-
-      print(
-        '${_isFriend ? "Added" : "Removed"} ${_storeUser?.displayName} as friend',
-      );
     } catch (e) {
       _error = e.toString();
-      print('Error toggling friend: $e');
+      print('Error sending friend request: $e');
+      notifyListeners();
+    }
+  }
+
+  Future<void> acceptFriendRequest(
+    String requestId,
+    String storeUserId,
+    String currentUserId,
+  ) async {
+    try {
+      // Use a batch write to perform multiple operations atomically
+      final batch = _firestore.batch();
+
+      // Update the friend request status
+      final requestRef = _firestore
+          .collection('friend_requests')
+          .doc(requestId);
+      batch.update(requestRef, {'status': 'accepted'});
+
+      // Add each user to the other's friend list
+      final currentUserRef = _firestore.collection('users').doc(currentUserId);
+      batch.update(currentUserRef, {
+        'friendIds': FieldValue.arrayUnion([storeUserId]),
+      });
+
+      final storeUserRef = _firestore.collection('users').doc(storeUserId);
+      batch.update(storeUserRef, {
+        'friendIds': FieldValue.arrayUnion([currentUserId]),
+      });
+
+      await batch.commit();
+
+      _isFriend = true;
+      _hasPendingRequestFromStore = false;
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      print('Error accepting friend request: $e');
+      notifyListeners();
+    }
+  }
+
+  Future<void> cancelFriendRequest(String requestId) async {
+    try {
+      await _firestore.collection('friend_requests').doc(requestId).delete();
+      _friendRequestSent = false;
+      _hasPendingRequestFromStore = false;
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      print('Error cancelling friend request: $e');
+      notifyListeners();
+    }
+  }
+
+  Future<void> removeFriend(String storeUserId, String currentUserId) async {
+    try {
+      final batch = _firestore.batch();
+
+      final currentUserRef = _firestore.collection('users').doc(currentUserId);
+      batch.update(currentUserRef, {
+        'friendIds': FieldValue.arrayRemove([storeUserId]),
+      });
+
+      final storeUserRef = _firestore.collection('users').doc(storeUserId);
+      batch.update(storeUserRef, {
+        'friendIds': FieldValue.arrayRemove([currentUserId]),
+      });
+
+      await batch.commit();
+
+      _isFriend = false;
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      print('Error removing friend: $e');
       notifyListeners();
     }
   }
@@ -138,34 +211,25 @@ class StoreProvider extends ChangeNotifier {
   Future<void> toggleFriend(String storeUserId, String currentUserId) async {
     try {
       final currentUserRef = _firestore.collection('users').doc(currentUserId);
-      final storeUserRef = _firestore.collection('users').doc(storeUserId);
       final currentUserDoc = await currentUserRef.get();
-      final storeUserDoc = await storeUserRef.get();
+
       if (!currentUserDoc.exists) return;
 
-      final friendIds1 = List<String>.from(
+      final friendIds = List<String>.from(
         currentUserDoc.data()?['friendIds'] ?? [],
       );
-      final friendIds2 = List<String>.from(
-        storeUserDoc.data()?['friendIds'] ?? [],
-      );
+
       if (_isFriend) {
         // Remove friend
-        friendIds1.remove(storeUserId);
-        friendIds2.remove(currentUserId);
-        _isFriendRequested = false;
+        friendIds.remove(storeUserId);
         _isFriend = false;
-      } else if (_isFriendRequested) {
+      } else {
         // Add friend
-        friendIds1.remove(storeUserId);
-        _isFriendRequested = false;
-      } else if (!_isFriendRequested) {
-        friendIds1.add(storeUserId);
-        _isFriendRequested = true;
+        friendIds.add(storeUserId);
+        _isFriend = true;
       }
 
-      await currentUserRef.update({'friendIds': friendIds1});
-      await storeUserRef.update({'friendIds': friendIds2});
+      await currentUserRef.update({'friendIds': friendIds});
       notifyListeners();
 
       print(
@@ -193,6 +257,9 @@ class StoreProvider extends ChangeNotifier {
     _isLoading = false;
     _error = null;
     _isFriend = false;
+    _friendRequestSent = false;
+    _hasPendingRequestFromStore = false;
+    _pendingRequestId = null;
     notifyListeners();
   }
 }

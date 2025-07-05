@@ -2,18 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/models/food_item_model.dart';
 import '../../../core/models/user_model.dart';
+import '../../../core/services/location_service.dart';
+import '../../../core/services/user_service.dart';
+import '../../location/providers/new_location_provider.dart';
+import '../../../core/models/user_location.dart';
 
 class UserStore {
   final AppUser user;
   final List<FoodItem> recentItems;
   final int totalItems;
   final bool isFriend;
+  final double? distanceKm;
 
   const UserStore({
     required this.user,
     required this.recentItems,
     required this.totalItems,
     required this.isFriend,
+    this.distanceKm,
   });
 }
 
@@ -33,6 +39,105 @@ class HomeProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   String get searchQuery => _searchQuery;
+
+  LocationProvider? locationProvider;
+
+  HomeProvider({this.locationProvider});
+
+  void updateLocationProvider(LocationProvider? provider) {
+    if (locationProvider != provider) {
+      locationProvider = provider;
+      _recalculateDistances();
+      notifyListeners();
+    }
+  }
+
+  void _recalculateDistances() {
+    if (locationProvider?.currentLocation == null) return;
+
+    final location = locationProvider!.currentLocation!;
+
+    _communityStores = _recalculateStoreDistances(_communityStores, location);
+    _friendStores = _recalculateStoreDistances(_friendStores, location);
+    _foodBankStores = _recalculateStoreDistances(_foodBankStores, location);
+  }
+
+  List<UserStore> _recalculateStoreDistances(
+    List<UserStore> stores,
+    UserLocation location,
+  ) {
+    return stores.map((store) {
+      if (store.user.location == null) return store;
+
+      final userLat = store.user.location!['lat'] as double?;
+      final userLng = store.user.location!['lng'] as double?;
+
+      if (userLat == null || userLng == null) return store;
+
+      final distance = LocationService.calculateDistance(
+        location.latitude,
+        location.longitude,
+        userLat,
+        userLng,
+      );
+
+      return UserStore(
+        user: store.user,
+        recentItems: store.recentItems,
+        totalItems: store.totalItems,
+        isFriend: store.isFriend,
+        distanceKm: distance,
+      );
+    }).toList();
+  }
+
+  Future<double?> _calculateDistanceToUser(AppUser user) async {
+    try {
+      final location = locationProvider?.currentLocation;
+      // Use location from provider if available
+      if (location != null && user.location != null) {
+        final currentLat = location.latitude;
+        final currentLng = location.longitude;
+        final userLat = user.location!['lat'] as double?;
+        final userLng = user.location!['lng'] as double?;
+
+        if (userLat != null && userLng != null) {
+          return LocationService.calculateDistance(
+            currentLat,
+            currentLng,
+            userLat,
+            userLng,
+          );
+        }
+      }
+
+      // Fallback to Firestore location
+      final currentUser = await UserService.getCurrentUser();
+      if (currentUser?.location == null || user.location == null) {
+        return null;
+      }
+
+      final currentLat = currentUser!.location!['lat'] as double?;
+      final currentLng = currentUser.location!['lng'] as double?;
+      final userLat = user.location!['lat'] as double?;
+      final userLng = user.location!['lng'] as double?;
+
+      if (currentLat != null &&
+          currentLng != null &&
+          userLat != null &&
+          userLng != null) {
+        return LocationService.calculateDistance(
+          currentLat,
+          currentLng,
+          userLat,
+          userLng,
+        );
+      }
+    } catch (e) {
+      print('Error calculating distance: $e');
+    }
+    return null;
+  }
 
   // Keep these for backward compatibility if needed
   List<FoodItem> get foodBankItems =>
@@ -157,6 +262,9 @@ class HomeProvider extends ChangeNotifier {
                 // .where('status', isEqualTo: 'available')
                 .get();
 
+        // Calculate distance to this user
+        final distance = await _calculateDistanceToUser(user);
+
         // Include all users (even those with no items) for debugging
         stores.add(
           UserStore(
@@ -164,6 +272,7 @@ class HomeProvider extends ChangeNotifier {
             recentItems: recentItems,
             totalItems: totalItemsQuery.docs.length,
             isFriend: false,
+            distanceKm: distance,
           ),
         );
       }
@@ -229,12 +338,16 @@ class HomeProvider extends ChangeNotifier {
                 ) // Restored since items DO have status
                 .get();
 
+        // Calculate distance to this friend
+        final distance = await _calculateDistanceToUser(user);
+
         stores.add(
           UserStore(
             user: user,
             recentItems: recentItems,
             totalItems: totalItemsQuery.docs.length,
             isFriend: true,
+            distanceKm: distance,
           ),
         );
       }
@@ -250,6 +363,14 @@ class HomeProvider extends ChangeNotifier {
   Future<void> _loadFoodBankStores(List<String> friendIds) async {
     try {
       print('🏪 Loading food bank stores...');
+
+      // First, let's check all users and their roles for debugging
+      final allUsersQuery = await _firestore.collection('users').get();
+      print('👥 Total users in database: ${allUsersQuery.docs.length}');
+      for (final doc in allUsersQuery.docs) {
+        final data = doc.data();
+        print('   User: ${data['displayName']} - Role: ${data['role']}');
+      }
 
       // Get all food bank users
       final usersQuery =
@@ -299,12 +420,16 @@ class HomeProvider extends ChangeNotifier {
                 ) // Restored since items DO have status
                 .get();
 
+        // Calculate distance to this food bank
+        final distance = await _calculateDistanceToUser(user);
+
         stores.add(
           UserStore(
             user: user,
             recentItems: recentItems,
             totalItems: totalItemsQuery.docs.length,
             isFriend: friendIds.contains(user.id),
+            distanceKm: distance,
           ),
         );
       }

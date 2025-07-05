@@ -158,6 +158,9 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.lightGrey,
+        hintStyle: GoogleFonts.inter(color: AppColors.textSecondary),
+        labelStyle: GoogleFonts.inter(color: AppColors.textSecondary),
+        floatingLabelStyle: GoogleFonts.inter(color: AppColors.primaryGreen),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -333,6 +336,7 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFF383838),
+        floatingLabelStyle: GoogleFonts.inter(color: AppColors.primaryGreen),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: Color(0xFF555555)),

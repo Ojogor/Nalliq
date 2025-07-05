@@ -77,18 +77,15 @@ class FoodItem {
       ),
       quantity: data['quantity'] ?? 1,
       unit: data['unit'] ?? 'pieces',
-      expiryDate:
-          data['expiryDate'] != null
-              ? (data['expiryDate'] as Timestamp).toDate()
-              : null,
+      expiryDate: (data['expiryDate'] as Timestamp?)?.toDate(),
       imageUrls: List<String>.from(data['imageUrls'] ?? []),
       reasonForOffering: data['reasonForOffering'] ?? '',
       status: ItemStatus.values.firstWhere(
         (status) => status.name == data['status'],
         orElse: () => ItemStatus.available,
       ),
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       location: data['location'],
       isForDonation: data['isForDonation'] ?? true,
       isForBarter: data['isForBarter'] ?? true,
